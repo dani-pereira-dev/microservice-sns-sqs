@@ -3,6 +3,7 @@ import path from 'node:path';
 import Database from 'better-sqlite3';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PaymentConfirmedEvent } from '@shared/contracts/events';
 import { PaymentConfirmation } from '@shared/contracts/payments';
 import { ServiceConfig } from '@shared/config/service-config.types';
 
@@ -14,6 +15,26 @@ interface PaymentRow {
   payment_method: string;
   status: 'confirmed';
   confirmed_at: string;
+}
+
+interface OutboxEventRow {
+  event_id: string;
+  topic_arn: string;
+  message_json: string;
+  attributes_json: string | null;
+  status: 'pending' | 'published';
+  attempts: number;
+  last_error: string | null;
+  created_at: string;
+  published_at: string | null;
+}
+
+export interface PendingOutboxEvent {
+  eventId: string;
+  topicArn: string;
+  message: PaymentConfirmedEvent;
+  attributes: Record<string, string>;
+  attempts: number;
 }
 
 @Injectable()
@@ -61,19 +82,47 @@ export class PaymentsRepository {
       WHERE idempotency_key IS NOT NULL
     `);
 
+    this.database.exec(`
+      CREATE TABLE IF NOT EXISTS payment_outbox (
+        event_id TEXT PRIMARY KEY,
+        topic_arn TEXT NOT NULL,
+        message_json TEXT NOT NULL,
+        attributes_json TEXT,
+        status TEXT NOT NULL,
+        attempts INTEGER NOT NULL DEFAULT 0,
+        last_error TEXT,
+        created_at TEXT NOT NULL,
+        published_at TEXT
+      )
+    `);
+
+    this.database.exec(`
+      CREATE INDEX IF NOT EXISTS idx_payment_outbox_status_created_at
+      ON payment_outbox(status, created_at)
+    `);
+
     this.logger.log(`SQLite persistence enabled at ${databasePath}.`);
   }
 
-  create(payment: PaymentConfirmation): PaymentConfirmation {
-    this.database
-      .prepare(
-        `
-          INSERT INTO payments (
-            idempotency_key, payment_id, order_id, amount, payment_method, status, confirmed_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)
-        `,
-      )
-      .run(
+  createWithOutbox(
+    payment: PaymentConfirmation,
+    event: PaymentConfirmedEvent,
+    topicArn: string,
+  ): PaymentConfirmation {
+    const insertPayment = this.database.prepare(`
+      INSERT INTO payments (
+        idempotency_key, payment_id, order_id, amount, payment_method, status, confirmed_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertOutboxEvent = this.database.prepare(`
+      INSERT INTO payment_outbox (
+        event_id, topic_arn, message_json, attributes_json, status, attempts, last_error, created_at, published_at
+      ) VALUES (?, ?, ?, ?, 'pending', 0, NULL, ?, NULL)
+    `);
+
+    const transaction = this.database.transaction(() => {
+      insertPayment.run(
         payment.idempotencyKey,
         payment.paymentId,
         payment.orderId,
@@ -82,6 +131,20 @@ export class PaymentsRepository {
         payment.status,
         payment.confirmedAt,
       );
+
+      insertOutboxEvent.run(
+        event.eventId,
+        topicArn,
+        JSON.stringify(event),
+        JSON.stringify({
+          eventType: event.eventType,
+          source: event.source,
+        }),
+        event.occurredAt,
+      );
+    });
+
+    transaction();
 
     return payment;
   }
@@ -126,6 +189,66 @@ export class PaymentsRepository {
       .all() as PaymentRow[];
 
     return rows.map((row) => this.mapRowToPayment(row));
+  }
+
+  listPendingOutboxEvents(limit = 10): PendingOutboxEvent[] {
+    const rows = this.database
+      .prepare(
+        `
+          SELECT
+            event_id,
+            topic_arn,
+            message_json,
+            attributes_json,
+            status,
+            attempts,
+            last_error,
+            created_at,
+            published_at
+          FROM payment_outbox
+          WHERE status = 'pending'
+          ORDER BY created_at ASC
+          LIMIT ?
+        `,
+      )
+      .all(limit) as OutboxEventRow[];
+
+    return rows.map((row) => ({
+      eventId: row.event_id,
+      topicArn: row.topic_arn,
+      message: JSON.parse(row.message_json) as PaymentConfirmedEvent,
+      attributes: row.attributes_json
+        ? (JSON.parse(row.attributes_json) as Record<string, string>)
+        : {},
+      attempts: row.attempts,
+    }));
+  }
+
+  markOutboxEventPublished(eventId: string) {
+    this.database
+      .prepare(
+        `
+          UPDATE payment_outbox
+          SET status = 'published',
+              published_at = ?,
+              last_error = NULL
+          WHERE event_id = ?
+        `,
+      )
+      .run(new Date().toISOString(), eventId);
+  }
+
+  markOutboxEventFailed(eventId: string, errorMessage: string) {
+    this.database
+      .prepare(
+        `
+          UPDATE payment_outbox
+          SET attempts = attempts + 1,
+              last_error = ?
+          WHERE event_id = ?
+        `,
+      )
+      .run(errorMessage, eventId);
   }
 
   private mapRowToPayment(row: PaymentRow): PaymentConfirmation {

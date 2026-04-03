@@ -163,7 +163,7 @@
                 "confirm"
               ]
             },
-            "description": "Confirma el pago en payments usando idempotencyKey, publica el evento payment.confirmed una sola vez y deja explicito que la confirmacion de la orden sigue de forma asincrona."
+            "description": "Confirma el pago en payments usando idempotencyKey, guarda el evento en un outbox para publicarlo a SNS y deja explicito que la confirmacion de la orden sigue de forma asincrona."
           },
           "response": []
         }

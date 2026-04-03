@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -15,17 +14,15 @@ import {
   PaymentConfirmation,
 } from '@shared/contracts/payments';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { MESSAGE_PUBLISHER } from '@shared/messaging/messaging.constants';
-import { MessagePublisher } from '@shared/messaging/messaging.interfaces';
+import { PaymentsOutboxPublisher } from './payments-outbox.publisher';
 import { PaymentsRepository } from './payments.repository';
 
 @Injectable()
 export class PaymentsService {
   constructor(
-    @Inject(MESSAGE_PUBLISHER)
-    private readonly messagePublisher: MessagePublisher,
     private readonly configService: ConfigService<ServiceConfig, true>,
     private readonly paymentsRepository: PaymentsRepository,
+    private readonly paymentsOutboxPublisher: PaymentsOutboxPublisher,
   ) {}
 
   listPayments() {
@@ -58,11 +55,12 @@ export class PaymentsService {
 
     if (existingPayment) {
       this.ensureIdempotentRequestMatches(existingPayment, normalizedInput);
+      void this.paymentsOutboxPublisher.publishPendingEvents();
 
       return {
         status: 'accepted',
         message:
-          'Payment request already processed for this idempotency key. Returning stored result without republishing the event.',
+          'Payment request already processed for this idempotency key. Returning stored result and keeping the outbox publication flow active.',
         payment: existingPayment,
         event: null,
         orderProcessing: {
@@ -84,18 +82,22 @@ export class PaymentsService {
       confirmedAt: new Date().toISOString(),
     };
 
-    this.paymentsRepository.create(paymentConfirmation);
-    const event = await this.publishPaymentConfirmedEvent(paymentConfirmation);
+    const event = this.buildPaymentConfirmedEvent(paymentConfirmation);
+    const topicArn = this.getPaymentConfirmedTopicArn();
+
+    this.paymentsRepository.createWithOutbox(paymentConfirmation, event, topicArn);
+    void this.paymentsOutboxPublisher.publishPendingEvents();
 
     return {
       status: 'accepted',
       message:
-        'Payment confirmed in payments and event published. Order confirmation will continue asynchronously.',
+        'Payment confirmed in payments and event queued in the outbox. Order confirmation will continue asynchronously.',
       payment: paymentConfirmation,
       event: {
         eventId: event.eventId,
         eventType: event.eventType,
         occurredAt: event.occurredAt,
+        publicationStatus: 'pending',
       },
       orderProcessing: {
         status: 'pending_async_confirmation',
@@ -106,9 +108,19 @@ export class PaymentsService {
     };
   }
 
-  private async publishPaymentConfirmedEvent(
+  private buildPaymentConfirmedEvent(
     payment: PaymentConfirmation,
-  ): Promise<PaymentConfirmedEvent> {
+  ): PaymentConfirmedEvent {
+    return {
+      eventId: crypto.randomUUID(),
+      eventType: PAYMENT_CONFIRMED_EVENT,
+      occurredAt: new Date().toISOString(),
+      source: 'payments',
+      payload: payment,
+    };
+  }
+
+  private getPaymentConfirmedTopicArn() {
     const topicArn = this.configService.get(
       'messaging.paymentConfirmedTopicArn',
       {
@@ -122,24 +134,7 @@ export class PaymentsService {
       );
     }
 
-    const event: PaymentConfirmedEvent = {
-      eventId: crypto.randomUUID(),
-      eventType: PAYMENT_CONFIRMED_EVENT,
-      occurredAt: new Date().toISOString(),
-      source: 'payments',
-      payload: payment,
-    };
-
-    await this.messagePublisher.publish({
-      topicArn,
-      message: event,
-      attributes: {
-        eventType: event.eventType,
-        source: event.source,
-      },
-    });
-
-    return event;
+    return topicArn;
   }
 
   private validateConfirmPaymentInput(input: ConfirmPaymentRequest) {
