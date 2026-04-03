@@ -72,6 +72,24 @@
       "name": "Payments",
       "item": [
         {
+          "name": "GET /payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{paymentsBaseUrl}}/payments",
+              "host": [
+                "{{paymentsBaseUrl}}"
+              ],
+              "path": [
+                "payments"
+              ]
+            },
+            "description": "Lista los pagos persistidos en el microservicio payments."
+          },
+          "response": []
+        },
+        {
           "name": "POST /payments/confirm",
           "request": {
             "method": "POST",

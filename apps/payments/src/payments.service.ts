@@ -11,6 +11,7 @@ import {
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_PUBLISHER } from '@shared/messaging/messaging.constants';
 import { MessagePublisher } from '@shared/messaging/messaging.interfaces';
+import { PaymentsRepository } from './payments.repository';
 
 @Injectable()
 export class PaymentsService {
@@ -18,7 +19,12 @@ export class PaymentsService {
     @Inject(MESSAGE_PUBLISHER)
     private readonly messagePublisher: MessagePublisher,
     private readonly configService: ConfigService<ServiceConfig, true>,
+    private readonly paymentsRepository: PaymentsRepository,
   ) {}
+
+  listPayments() {
+    return this.paymentsRepository.list();
+  }
 
   async confirmPayment(input: ConfirmPaymentRequest) {
     this.validateConfirmPaymentInput(input);
@@ -32,6 +38,7 @@ export class PaymentsService {
       confirmedAt: new Date().toISOString(),
     };
 
+    this.paymentsRepository.create(paymentConfirmation);
     const event = await this.publishPaymentConfirmedEvent(paymentConfirmation);
 
     return {

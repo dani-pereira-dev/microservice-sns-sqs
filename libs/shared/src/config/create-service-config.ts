@@ -41,6 +41,7 @@ export function createServiceConfig(
     },
     database: {
       ordersDbPath: process.env.ORDERS_DB_PATH ?? 'data/orders.sqlite',
+      paymentsDbPath: process.env.PAYMENTS_DB_PATH ?? 'data/payments.sqlite',
     },
   };
 }

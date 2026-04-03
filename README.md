@@ -27,6 +27,7 @@ apps/
       main.ts
       payments.controller.ts
       payments.module.ts
+      payments.repository.ts
       payments.service.ts
   notification/
     src/
@@ -66,6 +67,12 @@ npm run start:dev:payments
 npm run start:dev:notification
 ```
 
+Resetear las bases SQLite locales:
+
+```bash
+npm run db:reset
+```
+
 El script `start:dev` primero cierra instancias previas de estos tres servicios y despues los vuelve a levantar juntos.
 
 Cada servicio usa un puerto por defecto:
@@ -80,6 +87,7 @@ Podes sobreescribirlos con:
 - `PAYMENTS_PORT`
 - `NOTIFICATION_PORT`
 - `ORDERS_DB_PATH`
+- `PAYMENTS_DB_PATH`
 
 Si queres, tambien existe fallback a `PORT` cuando levantas un servicio de forma individual.
 
@@ -106,6 +114,7 @@ Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas ac
 
 - `GET /orders`
 - `POST /orders`
+- `GET /payments`
 - `POST /payments/confirm`
 
 `notification` no expone endpoints de negocio en este flujo. Consume eventos desde SQS.
@@ -120,6 +129,7 @@ Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas ac
 6. `notification` consume el mismo evento y ejecuta un placeholder de notificacion.
 
 `orders` ahora persiste localmente en SQLite. Por defecto usa `data/orders.sqlite`, asi que las ordenes sobreviven a reinicios del servicio.
+`payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.
 
 ## Criterio de arquitectura
 
@@ -130,3 +140,4 @@ Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas ac
 - La mensajeria usa un `MessagingModule` pequeno con publisher SNS y consumer SQS.
 - `payments` publica eventos; `orders` y `notification` consumen esos eventos.
 - `orders` usa un repositorio simple con SQLite para persistir y retomar ordenes.
+- `payments` usa su propio repositorio SQLite separado para persistir pagos confirmados.

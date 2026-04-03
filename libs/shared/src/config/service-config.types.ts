@@ -15,6 +15,7 @@ export interface ServiceMessagingConfig {
 
 export interface ServiceDatabaseConfig {
   ordersDbPath: string;
+  paymentsDbPath: string;
 }
 
 export interface ServiceConfig {
