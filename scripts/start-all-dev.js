@@ -11,11 +11,6 @@ const SERVICES = [
     script: 'start:dev:payments',
     patterns: ['apps/payments/src/main.ts', 'dist/payments/main.js'],
   },
-  {
-    name: 'notification',
-    script: 'start:dev:notification',
-    patterns: ['apps/notification/src/main.ts', 'dist/notification/main.js'],
-  },
 ];
 
 const children = [];
@@ -160,7 +155,7 @@ async function main() {
     startService(service);
   }
 
-  console.log('All services are starting in dev mode.');
+  console.log('Orders and payments are starting in dev mode.');
 }
 
 process.on('SIGINT', () => shutdown(0));

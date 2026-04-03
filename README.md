@@ -1,10 +1,10 @@
 # Monorepo simple con NestJS
 
-Base simple, pero mas cercana a produccion, para tres microservicios HTTP:
+Base simple, pero mas cercana a produccion, para dos microservicios HTTP y una Lambda:
 
 - `orders`
 - `payments`
-- `notification`
+- `notification-email` (AWS Lambda)
 
 La estructura ya queda preparada para crecer con modulos internos, configuracion por servicio y una integracion simple de SNS/SQS para comunicacion asincrona.
 
@@ -27,15 +27,20 @@ apps/
       main.ts
       payments.controller.ts
       payments.module.ts
+      payments-outbox.publisher.ts
       payments.repository.ts
       payments.service.ts
   notification/
     src/
-      app.module.ts
-      main.ts
-      notification-events.consumer.ts
-      notification.module.ts
-      notification.service.ts
+      # legado de referencia, fuera del flujo principal
+lambda/
+  notification-email/
+    src/
+      handler.ts
+docs/
+  notification-lambda-migration.md
+serverless.helpers.js
+serverless.yml
 libs/
   shared/
     src/
@@ -59,12 +64,13 @@ Levantar en desarrollo:
 npm run start:dev
 ```
 
+Ese script levanta solo `orders` y `payments`. El envio de emails queda a cargo de la Lambda de `notification-email`.
+
 O levantar uno por separado:
 
 ```bash
 npm run start:dev:orders
 npm run start:dev:payments
-npm run start:dev:notification
 ```
 
 Resetear las bases SQLite locales:
@@ -85,19 +91,49 @@ Reset completo de bases y colas:
 npm run reset:all
 ```
 
-El script `start:dev` primero cierra instancias previas de estos tres servicios y despues los vuelve a levantar juntos.
+Build de la Lambda:
+
+```bash
+npm run build:notification:lambda
+```
+
+Empaquetar la Lambda:
+
+```bash
+npm run package:notification:lambda
+```
+
+Desplegar la Lambda con AWS CLI:
+
+```bash
+npm run deploy:notification:lambda
+```
+
+Ver informacion del stack:
+
+```bash
+npm run info:notification:lambda
+```
+
+Eliminar la Lambda:
+
+```bash
+npm run remove:notification:lambda
+```
+
+Si necesitas comparar con el enfoque anterior, el microservicio Nest de `notification` sigue en `apps/notification` como referencia, pero ya no forma parte del flujo principal.
+
+El script `start:dev` primero cierra instancias previas de `orders` y `payments` y despues los vuelve a levantar.
 
 Cada servicio usa un puerto por defecto:
 
 - `orders`: `3001`
 - `payments`: `3002`
-- `notification`: `3003`
 
 Podes sobreescribirlos con:
 
 - `ORDERS_PORT`
 - `PAYMENTS_PORT`
-- `NOTIFICATION_PORT`
 - `ORDERS_DB_PATH`
 - `PAYMENTS_DB_PATH`
 
@@ -122,9 +158,12 @@ Variables relevantes:
 - `RESEND_API_KEY`
 - `NOTIFICATION_EMAIL_FROM`
 - `NOTIFICATION_DEFAULT_TO_EMAIL`
+- `NOTIFICATION_LAMBDA_FUNCTION_NAME`
 
 Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas aca. El SDK tambien soporta la cadena default de credenciales de AWS. Si usas LocalStack, podes completar `AWS_ENDPOINT` y usar credenciales dummy.
 Para emails de desarrollo con Resend, podes usar `onboarding@resend.dev` como remitente inicial y definir un destinatario por defecto en `NOTIFICATION_DEFAULT_TO_EMAIL`.
+La guia paso a paso de migracion a Lambda con `serverless.yml` esta en `docs/notification-lambda-migration.md`.
+El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local` antes de ejecutar `package`, `deploy`, `info` o `remove`.
 
 ## Endpoints disponibles
 
@@ -136,7 +175,7 @@ Para emails de desarrollo con Resend, podes usar `onboarding@resend.dev` como re
 - `GET /payments/:paymentId`
 - `POST /payments/confirm`
 
-`notification` no expone endpoints de negocio en este flujo. Consume eventos desde SQS.
+`notification-email` no expone endpoints HTTP. Consume eventos desde SQS a traves de una Lambda.
 
 ## Flujo actual
 
@@ -145,7 +184,7 @@ Para emails de desarrollo con Resend, podes usar `onboarding@resend.dev` como re
 3. `payments` publica el evento `payment.confirmed` en SNS.
 4. SNS distribuye el evento a dos colas SQS.
 5. `orders` consume el evento y actualiza la orden a `confirmed`.
-6. `notification` consume el mismo evento y envia un email usando Resend.
+6. La Lambda `notification-email` consume el mismo evento desde SQS y envia un email usando Resend.
 
 La respuesta de `POST /payments/confirm` representa la confirmacion del pago dentro de `payments` y la publicacion del evento, pero la confirmacion de la orden ocurre despues de forma asincrona en `orders`.
 
@@ -159,6 +198,7 @@ La respuesta de `POST /payments/confirm` representa la confirmacion del pago den
 - La capa compartida define `bootstrap`, configuracion y contratos de mensajeria.
 - Los contratos compartidos viven en `libs/shared/src/contracts`.
 - La mensajeria usa un `MessagingModule` pequeno con publisher SNS y consumer SQS.
-- `payments` publica eventos; `orders` y `notification` consumen esos eventos.
+- `payments` publica eventos; `orders` consume esos eventos y `notification-email` los procesa desde Lambda.
 - `orders` usa un repositorio simple con SQLite para persistir y retomar ordenes.
 - `payments` usa su propio repositorio SQLite separado para persistir pagos confirmados.
+- `payments` tambien usa outbox para garantizar publicacion confiable a SNS.

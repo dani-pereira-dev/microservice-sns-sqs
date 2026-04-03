@@ -1,0 +1,46 @@
+service: notification-email
+frameworkVersion: '3'
+configValidationMode: error
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  architecture: x86_64
+  region: ${env:AWS_REGION, 'us-east-1'}
+  stage: ${opt:stage, env:NODE_ENV, 'dev'}
+  timeout: 30
+  memorySize: 256
+  logRetentionInDays: 14
+  environment:
+    RESEND_API_KEY: ${env:RESEND_API_KEY}
+    NOTIFICATION_EMAIL_FROM: ${env:NOTIFICATION_EMAIL_FROM, 'onboarding@resend.dev'}
+    NOTIFICATION_DEFAULT_TO_EMAIL: ${env:NOTIFICATION_DEFAULT_TO_EMAIL, ''}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - sqs:ReceiveMessage
+            - sqs:DeleteMessage
+            - sqs:GetQueueAttributes
+            - sqs:ChangeMessageVisibility
+          Resource: ${file(./serverless.helpers.js):notificationQueueArn}
+
+package:
+  individually: true
+
+functions:
+  notificationPaymentConfirmed:
+    name: ${env:NOTIFICATION_LAMBDA_FUNCTION_NAME, 'notification-payment-confirmed'}
+    handler: dist-lambda/notification-email/index.handler
+    package:
+      patterns:
+        - '!**'
+        - 'dist-lambda/notification-email/index.js'
+    events:
+      - sqs:
+          arn: ${file(./serverless.helpers.js):notificationQueueArn}
+          batchSize: 10
+          maximumBatchingWindow: 5
+          functionResponseType: ReportBatchItemFailures
+          enabled: true

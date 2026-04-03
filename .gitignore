@@ -6,3 +6,5 @@ dist
 data/*.sqlite
 data/*.sqlite-*
 data/*.db
+dist-lambda
+.serverless
