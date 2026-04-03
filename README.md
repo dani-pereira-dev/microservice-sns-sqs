@@ -101,6 +101,24 @@ Resetear las bases SQLite locales:
 npm run db:reset
 ```
 
+Generar datos de prueba:
+
+```bash
+npm run seed:products
+```
+
+O usar el seeder generico:
+
+```bash
+npm run seed -- --entity products --count 5000
+```
+
+Por defecto el seeder limpia la tabla antes de insertar. Si queres agregar registros sin borrar los existentes:
+
+```bash
+npm run seed -- --entity products --count 5000 --append
+```
+
 Purgar las colas SQS del flujo:
 
 ```bash
@@ -237,6 +255,7 @@ La respuesta de `POST /payments/confirm` representa la confirmacion del pago den
 `payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.
 `products` persiste localmente en `data/products.sqlite`.
 `cart` persiste localmente en `data/cart.sqlite`.
+Los seeders escriben directo sobre esas bases locales ignoradas por git, asi que no agregan archivos de datos al repo.
 
 ## Criterio de arquitectura
 

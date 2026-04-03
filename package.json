@@ -5,6 +5,8 @@
   "scripts": {
     "start:dev": "node scripts/start-all-dev.js",
     "db:reset": "node scripts/reset-databases.js",
+    "seed": "node scripts/seed-data.js",
+    "seed:products": "node scripts/seed-data.js --entity products --count 5000",
     "queues:purge": "node scripts/purge-queues.js",
     "reset:all": "npm run db:reset && npm run queues:purge",
     "build:orders": "tsc -p apps/orders/tsconfig.json && tsc-alias -p apps/orders/tsconfig.json",
