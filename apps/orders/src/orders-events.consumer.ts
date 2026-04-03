@@ -58,6 +58,7 @@ export class OrdersEventsConsumer implements OnModuleInit {
           );
           await this.ordersEventsPublisher.publishOrderConfirmed(
             confirmedOrder,
+            event.payload,
           );
         } catch (error) {
           if (

@@ -20,10 +20,10 @@ export class OrdersEventsPublisher {
     private readonly configService: ConfigService<ServiceConfig, true>,
   ) {}
 
-  async publishOrderConfirmed(order: Order) {
-    const payment = order.payment;
+  async publishOrderConfirmed(order: Order, payment: PaymentConfirmation) {
+    const persistedPayment = order.payment;
 
-    if (!payment) {
+    if (!persistedPayment) {
       throw new InternalServerErrorException(
         `Order ${order.id} has no payment info to publish order.confirmed.`,
       );
@@ -38,7 +38,7 @@ export class OrdersEventsPublisher {
         orderId: order.id,
         customerName: order.customerName,
         amount: order.amount,
-        confirmedAt: payment.confirmedAt,
+        confirmedAt: persistedPayment.confirmedAt,
         payment,
       },
     };

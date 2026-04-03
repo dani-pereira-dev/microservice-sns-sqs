@@ -23,7 +23,7 @@ export interface OrderConfirmedPayload {
   customerName: string;
   amount: number;
   confirmedAt: string;
-  payment: NonNullable<Order['payment']>;
+  payment: PaymentConfirmation;
 }
 
 export interface OrderConfirmationFailedPayload {
