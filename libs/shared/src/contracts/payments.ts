@@ -1,7 +1,6 @@
 export interface ConfirmPaymentRequest {
   idempotencyKey: string;
   orderId: string;
-  amount: number;
   paymentMethod: string;
 }
 

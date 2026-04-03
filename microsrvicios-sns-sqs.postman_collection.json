@@ -496,7 +496,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"idempotencyKey\": \"pay-confirm-001\",\n  \"orderId\": \"REEMPLAZAR_ORDER_ID\",\n  \"amount\": 150,\n  \"paymentMethod\": \"credit_card\"\n}"
+              "raw": "{\n  \"idempotencyKey\": \"pay-confirm-001\",\n  \"orderId\": \"REEMPLAZAR_ORDER_ID\",\n  \"paymentMethod\": \"credit_card\"\n}"
             },
             "url": {
               "raw": "{{paymentsBaseUrl}}/payments/confirm",
@@ -508,7 +508,7 @@
                 "confirm"
               ]
             },
-            "description": "Confirma el pago en payments usando idempotencyKey, guarda el evento en un outbox para publicarlo a SNS y deja explicito que la confirmacion de la orden sigue de forma asincrona."
+            "description": "Confirma el pago en payments usando idempotencyKey. Payments consulta orders para tomar el total real de la orden, guarda el evento en un outbox y deja explicito que la confirmacion de la orden sigue de forma asincrona."
           },
           "response": []
         }

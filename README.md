@@ -243,7 +243,7 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 2. Crear un carrito en `cart`.
 3. Agregar items al carrito usando snapshots de `products`.
 4. Ejecutar checkout del carrito; `cart` crea una orden en `orders`.
-5. Confirmar el pago en `payments` usando `orderId` y el total de la orden.
+5. Confirmar el pago en `payments` usando `orderId`; `payments` consulta a `orders` para tomar el total real.
 6. `payments` publica el evento `payment.confirmed` en SNS.
 7. SNS distribuye el evento a dos colas SQS.
 8. `orders` consume el evento y actualiza la orden a `confirmed`.

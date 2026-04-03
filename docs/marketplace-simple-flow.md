@@ -154,6 +154,7 @@ sequenceDiagram
   Cart-->>Client: cart checked_out + orderId
 
   Client->>Payments: POST /payments/confirm
+  Payments->>Orders: GET /orders/:orderId
   Payments->>SNS: publish payment.confirmed
   SNS->>OrdersSQS: fanout
   SNS->>NotifySQS: fanout

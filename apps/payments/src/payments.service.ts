@@ -14,6 +14,7 @@ import {
   PaymentConfirmation,
 } from '@shared/contracts/payments';
 import { ServiceConfig } from '@shared/config/service-config.types';
+import { OrdersClient } from './orders.client';
 import { PaymentsOutboxPublisher } from './payments-outbox.publisher';
 import { PaymentsRepository } from './payments.repository';
 
@@ -21,6 +22,7 @@ import { PaymentsRepository } from './payments.repository';
 export class PaymentsService {
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
+    private readonly ordersClient: OrdersClient,
     private readonly paymentsRepository: PaymentsRepository,
     private readonly paymentsOutboxPublisher: PaymentsOutboxPublisher,
   ) {}
@@ -49,7 +51,6 @@ export class PaymentsService {
     const normalizedInput = {
       idempotencyKey: input.idempotencyKey.trim(),
       orderId: input.orderId.trim(),
-      amount: input.amount,
       paymentMethod: input.paymentMethod.trim(),
     };
 
@@ -76,11 +77,15 @@ export class PaymentsService {
       };
     }
 
+    const order = await this.ordersClient.validateOrderForPayment(
+      normalizedInput.orderId,
+    );
+
     const paymentConfirmation: PaymentConfirmation = {
       idempotencyKey: normalizedInput.idempotencyKey,
       paymentId: crypto.randomUUID(),
       orderId: normalizedInput.orderId,
-      amount: normalizedInput.amount,
+      amount: order.amount,
       paymentMethod: normalizedInput.paymentMethod,
       status: 'confirmed',
       confirmedAt: new Date().toISOString(),
@@ -150,10 +155,6 @@ export class PaymentsService {
       throw new BadRequestException('orderId is required.');
     }
 
-    if (typeof input.amount !== 'number' || input.amount <= 0) {
-      throw new BadRequestException('amount must be a number greater than 0.');
-    }
-
     if (!input.paymentMethod?.trim()) {
       throw new BadRequestException('paymentMethod is required.');
     }
@@ -166,12 +167,6 @@ export class PaymentsService {
     if (existingPayment.orderId !== input.orderId) {
       throw new ConflictException(
         'idempotencyKey already used with a different orderId.',
-      );
-    }
-
-    if (existingPayment.amount !== input.amount) {
-      throw new ConflictException(
-        'idempotencyKey already used with a different amount.',
       );
     }
 
