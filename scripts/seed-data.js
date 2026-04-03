@@ -90,6 +90,7 @@ const main = () => {
   const insertMany = database.transaction((records) => {
     for (const record of records) {
       seeder.insertRecord({
+        database,
         statement: insertStatement,
         record,
       });

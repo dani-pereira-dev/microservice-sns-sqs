@@ -1,6 +1,10 @@
 const productsSeeder = require('./products.seeder');
+const ordersReadySeeder = require('./orders-ready.seeder');
 
-const seeders = new Map([[productsSeeder.entity, productsSeeder]]);
+const seeders = new Map([
+  [productsSeeder.entity, productsSeeder],
+  [ordersReadySeeder.entity, ordersReadySeeder],
+]);
 
 const getSeeder = (entity) => seeders.get(entity);
 

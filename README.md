@@ -107,6 +107,18 @@ Generar datos de prueba:
 npm run seed:products
 ```
 
+Crear una orden de prueba lista para confirmar:
+
+```bash
+npm run seed:order-ready
+```
+
+Ese seeder deja una sola orden `pending` con varios items y un id fijo:
+
+```text
+order-ready-to-confirm-1
+```
+
 O usar el seeder generico:
 
 ```bash
