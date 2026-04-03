@@ -108,9 +108,10 @@ flowchart LR
   Cart[CartService]
   Orders[OrdersService]
   Payments[PaymentsService]
-  SNS[SNS]
+  PaymentTopic[PaymentConfirmedSNS]
   OrdersQueue[OrdersSQS]
-  NotifyQueue[NotificationSQS]
+  OrderStatusTopic[OrderStatusSNS]
+  NotifyQueue[NotificationOrderStatusSQS]
   NotifyLambda[NotificationLambda]
 
   Client -->|"POST /carts"| Cart
@@ -120,10 +121,11 @@ flowchart LR
   Client -->|"POST /carts/:cartId/checkout"| Cart
   Cart -->|"POST /orders"| Orders
   Client -->|"POST /payments/confirm"| Payments
-  Payments -->|"payment.confirmed"| SNS
-  SNS --> OrdersQueue
-  SNS --> NotifyQueue
+  Payments -->|"payment.confirmed"| PaymentTopic
+  PaymentTopic --> OrdersQueue
   OrdersQueue --> Orders
+  Orders -->|"order.confirmed / order.confirmation_failed"| OrderStatusTopic
+  OrderStatusTopic --> NotifyQueue
   NotifyQueue --> NotifyLambda
 ```
 
@@ -157,10 +159,11 @@ sequenceDiagram
   Payments->>Orders: GET /orders/:orderId
   Payments->>SNS: publish payment.confirmed
   SNS->>OrdersSQS: fanout
-  SNS->>NotifySQS: fanout
   OrdersSQS->>Orders: payment.confirmed
-  Orders->>Orders: order pasa a confirmed
-  NotifySQS->>Lambda: payment.confirmed
+  Orders->>Orders: confirma o rechaza la orden
+  Orders->>SNS: publish order.confirmed o order.confirmation_failed
+  SNS->>NotifySQS: fanout
+  NotifySQS->>Lambda: resultado real de orders
   Lambda->>Lambda: envia email con Resend
 ```
 
@@ -170,4 +173,4 @@ sequenceDiagram
 - `CartItem` nace cuando agregas productos al carrito.
 - `Order` y `OrderItem` nacen juntos en el checkout.
 - `Payment` nace cuando confirmas el pago.
-- `Order` cambia a `confirmed` despues, por evento asincrono.
+- `Order` publica el resultado final de confirmacion y desde ahi sale el email.

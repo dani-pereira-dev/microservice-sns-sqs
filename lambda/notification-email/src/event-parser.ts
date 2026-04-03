@@ -1,23 +1,22 @@
 import type { SQSRecord } from 'aws-lambda';
 import {
-  PAYMENT_CONFIRMED_EVENT,
-  PaymentConfirmedEvent,
+  ORDER_CONFIRMED_EVENT,
+  ORDER_CONFIRMATION_FAILED_EVENT,
+  OrderStatusEvent,
   SnsEnvelope,
 } from './types';
 
-export const parsePaymentConfirmedEvent = (
-  record: SQSRecord,
-): PaymentConfirmedEvent => {
+export const parseOrderStatusEvent = (record: SQSRecord): OrderStatusEvent => {
   const body = parseJson(record.body, 'SQS body');
 
-  if (isPaymentConfirmedEvent(body)) {
+  if (isOrderStatusEvent(body)) {
     return body;
   }
 
   if (isSnsEnvelope(body) && body.Message) {
     const snsMessage = parseJson(body.Message, 'SNS message');
 
-    if (isPaymentConfirmedEvent(snsMessage)) {
+    if (isOrderStatusEvent(snsMessage)) {
       return snsMessage;
     }
   }
@@ -36,17 +35,16 @@ const parseJson = <TValue>(rawValue: string, label: string): TValue => {
 const isSnsEnvelope = (value: unknown): value is SnsEnvelope =>
   typeof value === 'object' && value !== null && 'Message' in value;
 
-const isPaymentConfirmedEvent = (
-  value: unknown,
-): value is PaymentConfirmedEvent => {
+const isOrderStatusEvent = (value: unknown): value is OrderStatusEvent => {
   if (typeof value !== 'object' || value === null) {
     return false;
   }
 
-  const candidate = value as Partial<PaymentConfirmedEvent>;
+  const candidate = value as Partial<OrderStatusEvent>;
 
   return (
-    candidate.eventType === PAYMENT_CONFIRMED_EVENT &&
+    (candidate.eventType === ORDER_CONFIRMED_EVENT ||
+      candidate.eventType === ORDER_CONFIRMATION_FAILED_EVENT) &&
     typeof candidate.eventId === 'string' &&
     typeof candidate.occurredAt === 'string' &&
     typeof candidate.source === 'string' &&

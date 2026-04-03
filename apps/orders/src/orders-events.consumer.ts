@@ -1,4 +1,11 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   PAYMENT_CONFIRMED_EVENT,
@@ -7,6 +14,7 @@ import {
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
 import { MessageConsumer } from '@shared/messaging/messaging.interfaces';
+import { OrdersEventsPublisher } from './orders-events.publisher';
 import { OrdersService } from './orders.service';
 
 @Injectable()
@@ -17,6 +25,7 @@ export class OrdersEventsConsumer implements OnModuleInit {
     @Inject(MESSAGE_CONSUMER)
     private readonly messageConsumer: MessageConsumer,
     private readonly configService: ConfigService<ServiceConfig, true>,
+    private readonly ordersEventsPublisher: OrdersEventsPublisher,
     private readonly ordersService: OrdersService,
   ) {}
 
@@ -43,7 +52,34 @@ export class OrdersEventsConsumer implements OnModuleInit {
           return;
         }
 
-        this.ordersService.applyPaymentConfirmation(event.payload);
+        try {
+          const confirmedOrder = this.ordersService.applyPaymentConfirmation(
+            event.payload,
+          );
+          await this.ordersEventsPublisher.publishOrderConfirmed(
+            confirmedOrder,
+          );
+        } catch (error) {
+          if (
+            error instanceof BadRequestException ||
+            error instanceof NotFoundException
+          ) {
+            const reason =
+              error.message || 'Order confirmation failed for business reasons.';
+
+            this.logger.warn(
+              `Order confirmation failed for ${event.payload.orderId}: ${reason}`,
+            );
+
+            await this.ordersEventsPublisher.publishOrderConfirmationFailed(
+              event.payload,
+              reason,
+            );
+            return;
+          }
+
+          throw error;
+        }
       },
     });
   }

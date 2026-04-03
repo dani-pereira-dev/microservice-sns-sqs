@@ -30,7 +30,7 @@ async function main() {
     'AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL',
   );
   const notificationQueueUrl = getRequiredEnv(
-    'AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL',
+    'AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL',
   );
 
   const sqsClient = new SQSClient({

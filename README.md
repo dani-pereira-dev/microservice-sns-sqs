@@ -202,8 +202,9 @@ Variables relevantes:
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_SESSION_TOKEN`
 - `AWS_SNS_PAYMENT_CONFIRMED_TOPIC_ARN`
+- `AWS_SNS_ORDER_STATUS_TOPIC_ARN`
 - `AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL`
-- `AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL`
+- `AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL`
 - `RESEND_API_KEY`
 - `NOTIFICATION_EMAIL_FROM`
 - `NOTIFICATION_DEFAULT_TO_EMAIL`
@@ -245,11 +246,14 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 4. Ejecutar checkout del carrito; `cart` crea una orden en `orders`.
 5. Confirmar el pago en `payments` usando `orderId`; `payments` consulta a `orders` para tomar el total real.
 6. `payments` publica el evento `payment.confirmed` en SNS.
-7. SNS distribuye el evento a dos colas SQS.
-8. `orders` consume el evento y actualiza la orden a `confirmed`.
-9. La Lambda `notification-email` consume el mismo evento desde SQS y envia un email usando Resend.
+7. SNS distribuye ese evento a la cola SQS de `orders`.
+8. `orders` consume el evento, intenta confirmar la orden y publica un nuevo evento de salida:
+   - `order.confirmed` si la orden quedo confirmada
+   - `order.confirmation_failed` si la orden no pudo confirmarse por una regla de negocio
+9. SNS distribuye ese resultado a la cola SQS de `notification-email`.
+10. La Lambda `notification-email` consume ese resultado real y envia un email indicando exito o fallo.
 
-La respuesta de `POST /payments/confirm` representa la confirmacion del pago dentro de `payments` y la publicacion del evento, pero la confirmacion de la orden ocurre despues de forma asincrona en `orders`.
+La respuesta de `POST /payments/confirm` representa la confirmacion del pago dentro de `payments` y la publicacion del evento, pero la confirmacion final de la orden ocurre despues de forma asincrona en `orders`.
 
 `orders` ahora persiste localmente en SQLite. Por defecto usa `data/orders.sqlite`, asi que las ordenes sobreviven a reinicios del servicio.
 `payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.

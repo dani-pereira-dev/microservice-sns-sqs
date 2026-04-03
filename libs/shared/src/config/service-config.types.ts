@@ -9,8 +9,9 @@ export interface ServiceMessagingConfig {
   region: string;
   endpoint?: string;
   paymentConfirmedTopicArn?: string;
+  orderStatusTopicArn?: string;
   ordersPaymentConfirmedQueueUrl?: string;
-  notificationPaymentConfirmedQueueUrl?: string;
+  notificationOrderStatusQueueUrl?: string;
 }
 
 export interface ServiceDatabaseConfig {

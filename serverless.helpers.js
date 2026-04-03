@@ -15,7 +15,7 @@ function queueUrlToArn(queueUrl) {
 
   if (!match) {
     throw new Error(
-      'AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL must be a valid AWS SQS URL.',
+      'AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL must be a valid AWS SQS URL.',
     );
   }
 
@@ -26,6 +26,6 @@ function queueUrlToArn(queueUrl) {
 
 module.exports = {
   notificationQueueArn: queueUrlToArn(
-    getRequiredEnv('AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL'),
+    getRequiredEnv('AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL'),
   ),
 };

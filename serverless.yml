@@ -30,8 +30,8 @@ package:
   individually: true
 
 functions:
-  notificationPaymentConfirmed:
-    name: ${env:NOTIFICATION_LAMBDA_FUNCTION_NAME, 'notification-payment-confirmed'}
+  notificationOrderStatus:
+    name: ${env:NOTIFICATION_LAMBDA_FUNCTION_NAME, 'notification-order-status'}
     handler: dist-lambda/notification-email/index.handler
     package:
       patterns:

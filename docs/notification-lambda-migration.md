@@ -2,15 +2,17 @@
 
 ## Objetivo
 
-Mover el envio de email fuera del microservicio `notification` y ejecutarlo con una Lambda conectada a la cola `AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL`.
+Mover el envio de email fuera del microservicio `notification` y ejecutarlo con una Lambda conectada a la cola `AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL`.
 
 El flujo final queda asi:
 
 1. `payments` publica `payment.confirmed` en SNS.
-2. SNS entrega el mensaje a la cola SQS de notifications.
-3. La Lambda consume la cola SQS.
-4. La Lambda parsea el envelope SNS -> SQS.
-5. La Lambda envia el email con Resend.
+2. `orders` consume ese evento desde su cola SQS.
+3. `orders` publica `order.confirmed` o `order.confirmation_failed`.
+4. SNS entrega ese resultado a la cola SQS de notifications.
+5. La Lambda consume la cola SQS.
+6. La Lambda parsea el envelope SNS -> SQS.
+7. La Lambda envia el email con Resend indicando exito o fallo.
 
 ## Que se implemento en este repo
 
@@ -31,11 +33,12 @@ Completa estas variables en `.env.local` o `.env`:
 
 ```env
 AWS_REGION=us-east-2
-AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL=https://...
+AWS_SNS_ORDER_STATUS_TOPIC_ARN=arn:aws:sns:...
+AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL=https://...
 RESEND_API_KEY=re_...
 NOTIFICATION_EMAIL_FROM=onboarding@resend.dev
 NOTIFICATION_DEFAULT_TO_EMAIL=tu-email@dominio.com
-NOTIFICATION_LAMBDA_FUNCTION_NAME=notification-payment-confirmed
+NOTIFICATION_LAMBDA_FUNCTION_NAME=notification-order-status
 ```
 
 ## Paso 1: verificar credenciales AWS CLI
@@ -81,9 +84,10 @@ Se dejo `serverless` en la linea `v3` porque `v4` exige login o licencia incluso
 1. Crear una orden en `orders`.
 2. Confirmar el pago en `payments`.
 3. Verificar:
-   - `payments` publica el evento
+   - `payments` publica `payment.confirmed`
+   - `orders` publica `order.confirmed` o `order.confirmation_failed`
    - la Lambda se dispara
-   - llega el email
+   - llega el email correcto segun el resultado
 
 CloudWatch logs:
 
@@ -115,5 +119,5 @@ Eso ya quedo alineado en este repo.
 
 - La Lambda usa `partial batch failure`, asi que solo reintenta los mensajes fallidos.
 - El codigo soporta tanto mensajes SNS envueltos en SQS como mensajes raw.
-- `serverless.yml` deriva el ARN de la cola desde `AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL`, asi no duplicas URL y ARN en tu `.env`.
+- `serverless.yml` deriva el ARN de la cola desde `AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL`, asi no duplicas URL y ARN en tu `.env`.
 - Si en el futuro agregas `recipientEmail` al evento, la Lambda ya esta preparada para usarlo; si no viene, usa `NOTIFICATION_DEFAULT_TO_EMAIL`.

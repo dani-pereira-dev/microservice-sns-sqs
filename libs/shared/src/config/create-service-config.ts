@@ -34,10 +34,11 @@ export function createServiceConfig(
       region: process.env.AWS_REGION ?? 'us-east-1',
       endpoint: process.env.AWS_ENDPOINT,
       paymentConfirmedTopicArn: process.env.AWS_SNS_PAYMENT_CONFIRMED_TOPIC_ARN,
+      orderStatusTopicArn: process.env.AWS_SNS_ORDER_STATUS_TOPIC_ARN,
       ordersPaymentConfirmedQueueUrl:
         process.env.AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL,
-      notificationPaymentConfirmedQueueUrl:
-        process.env.AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL,
+      notificationOrderStatusQueueUrl:
+        process.env.AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL,
     },
     database: {
       ordersDbPath: process.env.ORDERS_DB_PATH ?? 'data/orders.sqlite',
