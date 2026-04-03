@@ -1,9 +1,16 @@
 export type OrderStatus = 'pending' | 'confirmed';
 
+export interface CreateOrderItemRequest {
+  productId: string;
+  productTitleSnapshot: string;
+  unitPrice: number;
+  quantity: number;
+}
+
 export interface CreateOrderRequest {
   customerName: string;
-  product: string;
-  amount: number;
+  items: CreateOrderItemRequest[];
+  sourceCartId?: string;
 }
 
 export interface OrderPaymentInfo {
@@ -13,13 +20,23 @@ export interface OrderPaymentInfo {
   confirmedAt: string;
 }
 
+export interface OrderItem {
+  id: string;
+  productId: string;
+  productTitleSnapshot: string;
+  unitPrice: number;
+  quantity: number;
+  lineTotal: number;
+}
+
 export interface Order {
   id: string;
   customerName: string;
-  product: string;
+  items: OrderItem[];
   amount: number;
   status: OrderStatus;
   createdAt: string;
   updatedAt: string;
+  sourceCartId?: string;
   payment?: OrderPaymentInfo;
 }

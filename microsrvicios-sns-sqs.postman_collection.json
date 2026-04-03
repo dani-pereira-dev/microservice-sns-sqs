@@ -15,6 +15,16 @@
       "key": "paymentsBaseUrl",
       "value": "http://localhost:3002",
       "type": "string"
+    },
+    {
+      "key": "productsBaseUrl",
+      "value": "http://localhost:3004",
+      "type": "string"
+    },
+    {
+      "key": "cartBaseUrl",
+      "value": "http://localhost:3005",
+      "type": "string"
     }
   ],
   "item": [
@@ -76,7 +86,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerName\": \"Daniel Pereira\",\n  \"product\": \"Curso NestJS\",\n  \"amount\": 150\n}"
+              "raw": "{\n  \"customerName\": \"Daniel Pereira\",\n  \"items\": [\n    {\n      \"productId\": \"REEMPLAZAR_PRODUCT_ID\",\n      \"productTitleSnapshot\": \"Curso NestJS\",\n      \"unitPrice\": 150,\n      \"quantity\": 1\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{ordersBaseUrl}}/orders",
@@ -87,7 +97,323 @@
                 "orders"
               ]
             },
-            "description": "Crea una orden en estado pending."
+            "description": "Crea una orden en estado pending a partir de items con snapshot."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "GET /products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{productsBaseUrl}}/products",
+              "host": [
+                "{{productsBaseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "Lista productos del catalogo."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /products/:productId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{productsBaseUrl}}/products/:productId",
+              "host": [
+                "{{productsBaseUrl}}"
+              ],
+              "path": [
+                "products",
+                ":productId"
+              ],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "REEMPLAZAR_PRODUCT_ID"
+                }
+              ]
+            },
+            "description": "Obtiene un producto por id."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /products",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Curso NestJS\",\n  \"price\": 150\n}"
+            },
+            "url": {
+              "raw": "{{productsBaseUrl}}/products",
+              "host": [
+                "{{productsBaseUrl}}"
+              ],
+              "path": [
+                "products"
+              ]
+            },
+            "description": "Crea un producto activo en el catalogo."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /products/:productId",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Curso NestJS Pro\",\n  \"price\": 180,\n  \"active\": true\n}"
+            },
+            "url": {
+              "raw": "{{productsBaseUrl}}/products/:productId",
+              "host": [
+                "{{productsBaseUrl}}"
+              ],
+              "path": [
+                "products",
+                ":productId"
+              ],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "REEMPLAZAR_PRODUCT_ID"
+                }
+              ]
+            },
+            "description": "Actualiza titulo, precio o estado activo del producto."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        {
+          "name": "GET /carts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts"
+              ]
+            },
+            "description": "Lista carritos."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /carts/:cartId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts/:cartId",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts",
+                ":cartId"
+              ],
+              "variable": [
+                {
+                  "key": "cartId",
+                  "value": "REEMPLAZAR_CART_ID"
+                }
+              ]
+            },
+            "description": "Obtiene un carrito con items y total."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /carts",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Daniel Pereira\"\n}"
+            },
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts"
+              ]
+            },
+            "description": "Crea un carrito abierto."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /carts/:cartId/items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"REEMPLAZAR_PRODUCT_ID\",\n  \"quantity\": 1\n}"
+            },
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts/:cartId/items",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts",
+                ":cartId",
+                "items"
+              ],
+              "variable": [
+                {
+                  "key": "cartId",
+                  "value": "REEMPLAZAR_CART_ID"
+                }
+              ]
+            },
+            "description": "Agrega un item al carrito tomando snapshot del producto."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /carts/:cartId/items/:itemId",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}"
+            },
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts/:cartId/items/:itemId",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts",
+                ":cartId",
+                "items",
+                ":itemId"
+              ],
+              "variable": [
+                {
+                  "key": "cartId",
+                  "value": "REEMPLAZAR_CART_ID"
+                },
+                {
+                  "key": "itemId",
+                  "value": "REEMPLAZAR_ITEM_ID"
+                }
+              ]
+            },
+            "description": "Actualiza la cantidad de un item del carrito."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /carts/:cartId/items/:itemId",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts/:cartId/items/:itemId",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts",
+                ":cartId",
+                "items",
+                ":itemId"
+              ],
+              "variable": [
+                {
+                  "key": "cartId",
+                  "value": "REEMPLAZAR_CART_ID"
+                },
+                {
+                  "key": "itemId",
+                  "value": "REEMPLAZAR_ITEM_ID"
+                }
+              ]
+            },
+            "description": "Elimina un item del carrito."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /carts/:cartId/checkout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts/:cartId/checkout",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts",
+                ":cartId",
+                "checkout"
+              ],
+              "variable": [
+                {
+                  "key": "cartId",
+                  "value": "REEMPLAZAR_CART_ID"
+                }
+              ]
+            },
+            "description": "Hace checkout del carrito y crea una orden en orders."
           },
           "response": []
         }
@@ -205,7 +531,7 @@
                 "orders"
               ]
             },
-            "description": "Variables incluidas en la coleccion: ordersBaseUrl y paymentsBaseUrl."
+            "description": "Variables incluidas en la coleccion: ordersBaseUrl, paymentsBaseUrl, productsBaseUrl y cartBaseUrl."
           },
           "response": []
         }

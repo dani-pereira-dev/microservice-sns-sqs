@@ -42,6 +42,12 @@ export function createServiceConfig(
     database: {
       ordersDbPath: process.env.ORDERS_DB_PATH ?? 'data/orders.sqlite',
       paymentsDbPath: process.env.PAYMENTS_DB_PATH ?? 'data/payments.sqlite',
+      productsDbPath: process.env.PRODUCTS_DB_PATH ?? 'data/products.sqlite',
+      cartDbPath: process.env.CART_DB_PATH ?? 'data/cart.sqlite',
+    },
+    dependencies: {
+      ordersBaseUrl: process.env.ORDERS_BASE_URL ?? 'http://localhost:3001',
+      productsBaseUrl: process.env.PRODUCTS_BASE_URL ?? 'http://localhost:3004',
     },
     notification: {
       resendApiKey: process.env.RESEND_API_KEY,

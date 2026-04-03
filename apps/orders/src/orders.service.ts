@@ -3,11 +3,16 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-} from "@nestjs/common";
+} from '@nestjs/common';
 import { PaymentConfirmation } from "@shared/contracts/payments";
-import { CreateOrderRequest, Order } from "@shared/contracts/orders";
-import { formatOrdersLog } from "@shared/messaging/messaging-log.utils";
-import { OrdersRepository } from "./orders.repository";
+import {
+  CreateOrderItemRequest,
+  CreateOrderRequest,
+  Order,
+  OrderItem,
+} from '@shared/contracts/orders';
+import { formatOrdersLog } from '@shared/messaging/messaging-log.utils';
+import { OrdersRepository } from './orders.repository';
 
 @Injectable()
 export class OrdersService {
@@ -33,14 +38,16 @@ export class OrdersService {
     this.validateCreateOrderInput(input);
 
     const now = new Date().toISOString();
+    const items = input.items.map((item) => this.mapInputToOrderItem(item));
     const order: Order = {
       id: crypto.randomUUID(),
       customerName: input.customerName.trim(),
-      product: input.product.trim(),
-      amount: input.amount,
-      status: "pending",
+      items,
+      amount: items.reduce((sum, item) => sum + item.lineTotal, 0),
+      status: 'pending',
       createdAt: now,
       updatedAt: now,
+      sourceCartId: input.sourceCartId?.trim() || undefined,
     };
 
     return this.ordersRepository.create(order);
@@ -91,15 +98,48 @@ export class OrdersService {
 
   private validateCreateOrderInput(input: CreateOrderRequest) {
     if (!input.customerName?.trim()) {
-      throw new BadRequestException("customerName is required.");
+      throw new BadRequestException('customerName is required.');
     }
 
-    if (!input.product?.trim()) {
-      throw new BadRequestException("product is required.");
+    if (!Array.isArray(input.items) || input.items.length === 0) {
+      throw new BadRequestException('items must contain at least one item.');
     }
 
-    if (typeof input.amount !== "number" || input.amount <= 0) {
-      throw new BadRequestException("amount must be a number greater than 0.");
+    for (const item of input.items) {
+      this.validateCreateOrderItemInput(item);
     }
+  }
+
+  private validateCreateOrderItemInput(input: CreateOrderItemRequest) {
+    if (!input.productId?.trim()) {
+      throw new BadRequestException('productId is required.');
+    }
+
+    if (!input.productTitleSnapshot?.trim()) {
+      throw new BadRequestException('productTitleSnapshot is required.');
+    }
+
+    if (typeof input.unitPrice !== 'number' || input.unitPrice <= 0) {
+      throw new BadRequestException(
+        'unitPrice must be a number greater than 0.',
+      );
+    }
+
+    if (!Number.isInteger(input.quantity) || input.quantity <= 0) {
+      throw new BadRequestException(
+        'quantity must be an integer greater than 0.',
+      );
+    }
+  }
+
+  private mapInputToOrderItem(input: CreateOrderItemRequest): OrderItem {
+    return {
+      id: crypto.randomUUID(),
+      productId: input.productId.trim(),
+      productTitleSnapshot: input.productTitleSnapshot.trim(),
+      unitPrice: input.unitPrice,
+      quantity: input.quantity,
+      lineTotal: input.unitPrice * input.quantity,
+    };
   }
 }

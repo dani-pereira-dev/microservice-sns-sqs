@@ -11,6 +11,16 @@ const SERVICES = [
     script: 'start:dev:payments',
     patterns: ['apps/payments/src/main.ts', 'dist/payments/main.js'],
   },
+  {
+    name: 'products',
+    script: 'start:dev:products',
+    patterns: ['apps/products/src/main.ts', 'dist/products/main.js'],
+  },
+  {
+    name: 'cart',
+    script: 'start:dev:cart',
+    patterns: ['apps/cart/src/main.ts', 'dist/cart/main.js'],
+  },
 ];
 
 const children = [];
@@ -155,7 +165,7 @@ async function main() {
     startService(service);
   }
 
-  console.log('Orders and payments are starting in dev mode.');
+  console.log('Orders, payments, products and cart are starting in dev mode.');
 }
 
 process.on('SIGINT', () => shutdown(0));

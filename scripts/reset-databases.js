@@ -31,6 +31,14 @@ function main() {
     process.env.PAYMENTS_DB_PATH,
     'data/payments.sqlite',
   );
+  const productsDbPath = resolveDatabasePath(
+    process.env.PRODUCTS_DB_PATH,
+    'data/products.sqlite',
+  );
+  const cartDbPath = resolveDatabasePath(
+    process.env.CART_DB_PATH,
+    'data/cart.sqlite',
+  );
 
   removeIfExists(ordersDbPath);
   removeIfExists(`${ordersDbPath}-shm`);
@@ -39,6 +47,14 @@ function main() {
   removeIfExists(paymentsDbPath);
   removeIfExists(`${paymentsDbPath}-shm`);
   removeIfExists(`${paymentsDbPath}-wal`);
+
+  removeIfExists(productsDbPath);
+  removeIfExists(`${productsDbPath}-shm`);
+  removeIfExists(`${productsDbPath}-wal`);
+
+  removeIfExists(cartDbPath);
+  removeIfExists(`${cartDbPath}-shm`);
+  removeIfExists(`${cartDbPath}-wal`);
 }
 
 main();

@@ -16,7 +16,9 @@
       "@shared/*": ["libs/shared/src/*"],
       "@orders/*": ["apps/orders/src/*"],
       "@payments/*": ["apps/payments/src/*"],
-      "@notification/*": ["apps/notification/src/*"]
+      "@notification/*": ["apps/notification/src/*"],
+      "@products/*": ["apps/products/src/*"],
+      "@cart/*": ["apps/cart/src/*"]
     },
     "ignoreDeprecations": "6.0",
     "types": ["node"],

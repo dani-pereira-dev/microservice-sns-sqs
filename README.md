@@ -1,9 +1,11 @@
 # Monorepo simple con NestJS
 
-Base simple, pero mas cercana a produccion, para dos microservicios HTTP y una Lambda:
+Base simple, pero mas cercana a produccion, para cuatro microservicios HTTP y una Lambda:
 
 - `orders`
 - `payments`
+- `products`
+- `cart`
 - `notification-email` (AWS Lambda)
 
 La estructura ya queda preparada para crecer con modulos internos, configuracion por servicio y una integracion simple de SNS/SQS para comunicacion asincrona.
@@ -30,6 +32,24 @@ apps/
       payments-outbox.publisher.ts
       payments.repository.ts
       payments.service.ts
+  products/
+    src/
+      app.module.ts
+      main.ts
+      products.controller.ts
+      products.module.ts
+      products.repository.ts
+      products.service.ts
+  cart/
+    src/
+      app.module.ts
+      main.ts
+      cart.controller.ts
+      cart.module.ts
+      cart.repository.ts
+      cart.service.ts
+      orders.client.ts
+      products.client.ts
   notification/
     src/
       # legado de referencia, fuera del flujo principal
@@ -64,13 +84,15 @@ Levantar en desarrollo:
 npm run start:dev
 ```
 
-Ese script levanta solo `orders` y `payments`. El envio de emails queda a cargo de la Lambda de `notification-email`.
+Ese script levanta `orders`, `payments`, `products` y `cart`. El envio de emails queda a cargo de la Lambda de `notification-email`.
 
 O levantar uno por separado:
 
 ```bash
 npm run start:dev:orders
 npm run start:dev:payments
+npm run start:dev:products
+npm run start:dev:cart
 ```
 
 Resetear las bases SQLite locales:
@@ -103,7 +125,7 @@ Empaquetar la Lambda:
 npm run package:notification:lambda
 ```
 
-Desplegar la Lambda con AWS CLI:
+Desplegar la Lambda con Serverless:
 
 ```bash
 npm run deploy:notification:lambda
@@ -124,18 +146,27 @@ npm run remove:notification:lambda
 Si necesitas comparar con el enfoque anterior, el microservicio Nest de `notification` sigue en `apps/notification` como referencia, pero ya no forma parte del flujo principal.
 
 El script `start:dev` primero cierra instancias previas de `orders` y `payments` y despues los vuelve a levantar.
+El script `start:dev` primero cierra instancias previas de `orders`, `payments`, `products` y `cart`, y despues los vuelve a levantar.
 
 Cada servicio usa un puerto por defecto:
 
 - `orders`: `3001`
 - `payments`: `3002`
+- `products`: `3004`
+- `cart`: `3005`
 
 Podes sobreescribirlos con:
 
 - `ORDERS_PORT`
 - `PAYMENTS_PORT`
+- `PRODUCTS_PORT`
+- `CART_PORT`
 - `ORDERS_DB_PATH`
 - `PAYMENTS_DB_PATH`
+- `PRODUCTS_DB_PATH`
+- `CART_DB_PATH`
+- `ORDERS_BASE_URL`
+- `PRODUCTS_BASE_URL`
 
 Si queres, tambien existe fallback a `PORT` cuando levantas un servicio de forma individual.
 
@@ -170,6 +201,17 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 - `GET /orders`
 - `GET /orders/:orderId`
 - `POST /orders`
+- `GET /products`
+- `GET /products/:productId`
+- `POST /products`
+- `PATCH /products/:productId`
+- `GET /carts`
+- `GET /carts/:cartId`
+- `POST /carts`
+- `POST /carts/:cartId/items`
+- `PATCH /carts/:cartId/items/:itemId`
+- `DELETE /carts/:cartId/items/:itemId`
+- `POST /carts/:cartId/checkout`
 - `GET /payments`
 - `GET /payments/outbox`
 - `GET /payments/:paymentId`
@@ -179,17 +221,22 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 
 ## Flujo actual
 
-1. Crear una orden en `orders`. La orden queda en estado `pending`.
-2. Confirmar el pago en `payments`.
-3. `payments` publica el evento `payment.confirmed` en SNS.
-4. SNS distribuye el evento a dos colas SQS.
-5. `orders` consume el evento y actualiza la orden a `confirmed`.
-6. La Lambda `notification-email` consume el mismo evento desde SQS y envia un email usando Resend.
+1. Crear productos en `products`.
+2. Crear un carrito en `cart`.
+3. Agregar items al carrito usando snapshots de `products`.
+4. Ejecutar checkout del carrito; `cart` crea una orden en `orders`.
+5. Confirmar el pago en `payments` usando `orderId` y el total de la orden.
+6. `payments` publica el evento `payment.confirmed` en SNS.
+7. SNS distribuye el evento a dos colas SQS.
+8. `orders` consume el evento y actualiza la orden a `confirmed`.
+9. La Lambda `notification-email` consume el mismo evento desde SQS y envia un email usando Resend.
 
 La respuesta de `POST /payments/confirm` representa la confirmacion del pago dentro de `payments` y la publicacion del evento, pero la confirmacion de la orden ocurre despues de forma asincrona en `orders`.
 
 `orders` ahora persiste localmente en SQLite. Por defecto usa `data/orders.sqlite`, asi que las ordenes sobreviven a reinicios del servicio.
 `payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.
+`products` persiste localmente en `data/products.sqlite`.
+`cart` persiste localmente en `data/cart.sqlite`.
 
 ## Criterio de arquitectura
 
@@ -198,7 +245,9 @@ La respuesta de `POST /payments/confirm` representa la confirmacion del pago den
 - La capa compartida define `bootstrap`, configuracion y contratos de mensajeria.
 - Los contratos compartidos viven en `libs/shared/src/contracts`.
 - La mensajeria usa un `MessagingModule` pequeno con publisher SNS y consumer SQS.
+- `products` expone un catalogo HTTP simple.
+- `cart` orquesta el armado del carrito y el checkout por HTTP contra `products` y `orders`.
 - `payments` publica eventos; `orders` consume esos eventos y `notification-email` los procesa desde Lambda.
-- `orders` usa un repositorio simple con SQLite para persistir y retomar ordenes.
+- `orders` usa un repositorio simple con SQLite para persistir `order` y `order_items`.
 - `payments` usa su propio repositorio SQLite separado para persistir pagos confirmados.
 - `payments` tambien usa outbox para garantizar publicacion confiable a SNS.

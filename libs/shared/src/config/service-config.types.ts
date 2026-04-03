@@ -16,6 +16,13 @@ export interface ServiceMessagingConfig {
 export interface ServiceDatabaseConfig {
   ordersDbPath: string;
   paymentsDbPath: string;
+  productsDbPath: string;
+  cartDbPath: string;
+}
+
+export interface ServiceDependenciesConfig {
+  ordersBaseUrl: string;
+  productsBaseUrl: string;
 }
 
 export interface ServiceNotificationConfig {
@@ -28,5 +35,6 @@ export interface ServiceConfig {
   app: ServiceAppConfig;
   messaging: ServiceMessagingConfig;
   database: ServiceDatabaseConfig;
+  dependencies: ServiceDependenciesConfig;
   notification: ServiceNotificationConfig;
 }
