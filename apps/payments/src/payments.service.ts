@@ -29,6 +29,10 @@ export class PaymentsService {
     return this.paymentsRepository.list();
   }
 
+  listOutboxEvents() {
+    return this.paymentsRepository.listOutboxEvents();
+  }
+
   getPaymentById(paymentId: string) {
     const payment = this.paymentsRepository.findByPaymentId(paymentId);
 

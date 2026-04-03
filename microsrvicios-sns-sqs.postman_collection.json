@@ -140,6 +140,25 @@
           "response": []
         },
         {
+          "name": "GET /payments/outbox",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{paymentsBaseUrl}}/payments/outbox",
+              "host": [
+                "{{paymentsBaseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "outbox"
+              ]
+            },
+            "description": "Lista todos los registros del outbox de payments, incluyendo eventos pending y published."
+          },
+          "response": []
+        },
+        {
           "name": "POST /payments/confirm",
           "request": {
             "method": "POST",

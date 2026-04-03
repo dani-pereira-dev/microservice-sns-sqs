@@ -37,6 +37,18 @@ export interface PendingOutboxEvent {
   attempts: number;
 }
 
+export interface OutboxEventRecord {
+  eventId: string;
+  topicArn: string;
+  message: PaymentConfirmedEvent;
+  attributes: Record<string, string>;
+  status: 'pending' | 'published';
+  attempts: number;
+  lastError: string | null;
+  createdAt: string;
+  publishedAt: string | null;
+}
+
 @Injectable()
 export class PaymentsRepository {
   private readonly logger = new Logger(PaymentsRepository.name);
@@ -191,6 +203,29 @@ export class PaymentsRepository {
     return rows.map((row) => this.mapRowToPayment(row));
   }
 
+  listOutboxEvents(): OutboxEventRecord[] {
+    const rows = this.database
+      .prepare(
+        `
+          SELECT
+            event_id,
+            topic_arn,
+            message_json,
+            attributes_json,
+            status,
+            attempts,
+            last_error,
+            created_at,
+            published_at
+          FROM payment_outbox
+          ORDER BY created_at ASC
+        `,
+      )
+      .all() as OutboxEventRow[];
+
+    return rows.map((row) => this.mapRowToOutboxEvent(row));
+  }
+
   listPendingOutboxEvents(limit = 10): PendingOutboxEvent[] {
     const rows = this.database
       .prepare(
@@ -213,15 +248,17 @@ export class PaymentsRepository {
       )
       .all(limit) as OutboxEventRow[];
 
-    return rows.map((row) => ({
-      eventId: row.event_id,
-      topicArn: row.topic_arn,
-      message: JSON.parse(row.message_json) as PaymentConfirmedEvent,
-      attributes: row.attributes_json
-        ? (JSON.parse(row.attributes_json) as Record<string, string>)
-        : {},
-      attempts: row.attempts,
-    }));
+    return rows.map((row) => {
+      const event = this.mapRowToOutboxEvent(row);
+
+      return {
+        eventId: event.eventId,
+        topicArn: event.topicArn,
+        message: event.message,
+        attributes: event.attributes,
+        attempts: event.attempts,
+      };
+    });
   }
 
   markOutboxEventPublished(eventId: string) {
@@ -260,6 +297,22 @@ export class PaymentsRepository {
       paymentMethod: row.payment_method,
       status: row.status,
       confirmedAt: row.confirmed_at,
+    };
+  }
+
+  private mapRowToOutboxEvent(row: OutboxEventRow): OutboxEventRecord {
+    return {
+      eventId: row.event_id,
+      topicArn: row.topic_arn,
+      message: JSON.parse(row.message_json) as PaymentConfirmedEvent,
+      attributes: row.attributes_json
+        ? (JSON.parse(row.attributes_json) as Record<string, string>)
+        : {},
+      status: row.status,
+      attempts: row.attempts,
+      lastError: row.last_error,
+      createdAt: row.created_at,
+      publishedAt: row.published_at,
     };
   }
 
