@@ -7,6 +7,7 @@ import { PaymentConfirmation } from '@shared/contracts/payments';
 import { ServiceConfig } from '@shared/config/service-config.types';
 
 interface PaymentRow {
+  idempotency_key: string;
   payment_id: string;
   order_id: string;
   amount: number;
@@ -38,6 +39,7 @@ export class PaymentsRepository {
 
     this.database.exec(`
       CREATE TABLE IF NOT EXISTS payments (
+        idempotency_key TEXT,
         payment_id TEXT PRIMARY KEY,
         order_id TEXT NOT NULL,
         amount REAL NOT NULL,
@@ -52,6 +54,13 @@ export class PaymentsRepository {
       ON payments(order_id)
     `);
 
+    this.ensureIdempotencyKeyColumn();
+    this.database.exec(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_idempotency_key
+      ON payments(idempotency_key)
+      WHERE idempotency_key IS NOT NULL
+    `);
+
     this.logger.log(`SQLite persistence enabled at ${databasePath}.`);
   }
 
@@ -60,11 +69,12 @@ export class PaymentsRepository {
       .prepare(
         `
           INSERT INTO payments (
-            payment_id, order_id, amount, payment_method, status, confirmed_at
-          ) VALUES (?, ?, ?, ?, ?, ?)
+            idempotency_key, payment_id, order_id, amount, payment_method, status, confirmed_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
       )
       .run(
+        payment.idempotencyKey,
         payment.paymentId,
         payment.orderId,
         payment.amount,
@@ -80,7 +90,7 @@ export class PaymentsRepository {
     const row = this.database
       .prepare(
         `
-          SELECT payment_id, order_id, amount, payment_method, status, confirmed_at
+          SELECT idempotency_key, payment_id, order_id, amount, payment_method, status, confirmed_at
           FROM payments
           WHERE payment_id = ?
         `,
@@ -90,11 +100,25 @@ export class PaymentsRepository {
     return row ? this.mapRowToPayment(row) : null;
   }
 
+  findByIdempotencyKey(idempotencyKey: string): PaymentConfirmation | null {
+    const row = this.database
+      .prepare(
+        `
+          SELECT idempotency_key, payment_id, order_id, amount, payment_method, status, confirmed_at
+          FROM payments
+          WHERE idempotency_key = ?
+        `,
+      )
+      .get(idempotencyKey) as PaymentRow | undefined;
+
+    return row ? this.mapRowToPayment(row) : null;
+  }
+
   list(): PaymentConfirmation[] {
     const rows = this.database
       .prepare(
         `
-          SELECT payment_id, order_id, amount, payment_method, status, confirmed_at
+          SELECT idempotency_key, payment_id, order_id, amount, payment_method, status, confirmed_at
           FROM payments
           ORDER BY confirmed_at ASC
         `,
@@ -106,6 +130,7 @@ export class PaymentsRepository {
 
   private mapRowToPayment(row: PaymentRow): PaymentConfirmation {
     return {
+      idempotencyKey: row.idempotency_key,
       paymentId: row.payment_id,
       orderId: row.order_id,
       amount: row.amount,
@@ -113,5 +138,22 @@ export class PaymentsRepository {
       status: row.status,
       confirmedAt: row.confirmed_at,
     };
+  }
+
+  private ensureIdempotencyKeyColumn() {
+    const columns = this.database
+      .prepare('PRAGMA table_info(payments)')
+      .all() as Array<{ name: string }>;
+
+    const hasIdempotencyKeyColumn = columns.some(
+      (column) => column.name === 'idempotency_key',
+    );
+
+    if (!hasIdempotencyKeyColumn) {
+      this.database.exec(`
+        ALTER TABLE payments
+        ADD COLUMN idempotency_key TEXT
+      `);
+    }
   }
 }

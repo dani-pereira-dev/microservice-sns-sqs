@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   PAYMENT_CONFIRMED_EVENT,
@@ -39,11 +45,41 @@ export class PaymentsService {
   async confirmPayment(input: ConfirmPaymentRequest) {
     this.validateConfirmPaymentInput(input);
 
-    const paymentConfirmation: PaymentConfirmation = {
-      paymentId: crypto.randomUUID(),
-      orderId: input.orderId,
+    const normalizedInput = {
+      idempotencyKey: input.idempotencyKey.trim(),
+      orderId: input.orderId.trim(),
       amount: input.amount,
       paymentMethod: input.paymentMethod.trim(),
+    };
+
+    const existingPayment = this.paymentsRepository.findByIdempotencyKey(
+      normalizedInput.idempotencyKey,
+    );
+
+    if (existingPayment) {
+      this.ensureIdempotentRequestMatches(existingPayment, normalizedInput);
+
+      return {
+        status: 'accepted',
+        message:
+          'Payment request already processed for this idempotency key. Returning stored result without republishing the event.',
+        payment: existingPayment,
+        event: null,
+        orderProcessing: {
+          status: 'already_requested',
+        },
+        idempotency: {
+          replayed: true,
+        },
+      };
+    }
+
+    const paymentConfirmation: PaymentConfirmation = {
+      idempotencyKey: normalizedInput.idempotencyKey,
+      paymentId: crypto.randomUUID(),
+      orderId: normalizedInput.orderId,
+      amount: normalizedInput.amount,
+      paymentMethod: normalizedInput.paymentMethod,
       status: 'confirmed',
       confirmedAt: new Date().toISOString(),
     };
@@ -63,6 +99,9 @@ export class PaymentsService {
       },
       orderProcessing: {
         status: 'pending_async_confirmation',
+      },
+      idempotency: {
+        replayed: false,
       },
     };
   }
@@ -104,6 +143,10 @@ export class PaymentsService {
   }
 
   private validateConfirmPaymentInput(input: ConfirmPaymentRequest) {
+    if (!input.idempotencyKey?.trim()) {
+      throw new BadRequestException('idempotencyKey is required.');
+    }
+
     if (!input.orderId?.trim()) {
       throw new BadRequestException('orderId is required.');
     }
@@ -114,6 +157,29 @@ export class PaymentsService {
 
     if (!input.paymentMethod?.trim()) {
       throw new BadRequestException('paymentMethod is required.');
+    }
+  }
+
+  private ensureIdempotentRequestMatches(
+    existingPayment: PaymentConfirmation,
+    input: ConfirmPaymentRequest,
+  ) {
+    if (existingPayment.orderId !== input.orderId) {
+      throw new ConflictException(
+        'idempotencyKey already used with a different orderId.',
+      );
+    }
+
+    if (existingPayment.amount !== input.amount) {
+      throw new ConflictException(
+        'idempotencyKey already used with a different amount.',
+      );
+    }
+
+    if (existingPayment.paymentMethod !== input.paymentMethod) {
+      throw new ConflictException(
+        'idempotencyKey already used with a different paymentMethod.',
+      );
     }
   }
 }

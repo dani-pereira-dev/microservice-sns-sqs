@@ -151,7 +151,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"orderId\": \"REEMPLAZAR_ORDER_ID\",\n  \"amount\": 150,\n  \"paymentMethod\": \"credit_card\"\n}"
+              "raw": "{\n  \"idempotencyKey\": \"pay-confirm-001\",\n  \"orderId\": \"REEMPLAZAR_ORDER_ID\",\n  \"amount\": 150,\n  \"paymentMethod\": \"credit_card\"\n}"
             },
             "url": {
               "raw": "{{paymentsBaseUrl}}/payments/confirm",
@@ -163,7 +163,7 @@
                 "confirm"
               ]
             },
-            "description": "Confirma el pago en payments, publica el evento payment.confirmed y deja explicito que la confirmacion de la orden sigue de forma asincrona."
+            "description": "Confirma el pago en payments usando idempotencyKey, publica el evento payment.confirmed una sola vez y deja explicito que la confirmacion de la orden sigue de forma asincrona."
           },
           "response": []
         }
