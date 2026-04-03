@@ -1,0 +1,128 @@
+{
+  "info": {
+    "_postman_id": "b4a5490a-0dc9-4f30-9cdb-23a00d0d8e2a",
+    "name": "microsrvicios-sns-sqs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Coleccion base para probar los endpoints HTTP actuales de orders y payments."
+  },
+  "variable": [
+    {
+      "key": "ordersBaseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "paymentsBaseUrl",
+      "value": "http://localhost:3002",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Orders",
+      "item": [
+        {
+          "name": "GET /orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ordersBaseUrl}}/orders",
+              "host": [
+                "{{ordersBaseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            },
+            "description": "Lista las ordenes en memoria."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /orders",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Daniel Pereira\",\n  \"product\": \"Curso NestJS\",\n  \"amount\": 150\n}"
+            },
+            "url": {
+              "raw": "{{ordersBaseUrl}}/orders",
+              "host": [
+                "{{ordersBaseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            },
+            "description": "Crea una orden en estado pending."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /payments/confirm",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"REEMPLAZAR_ORDER_ID\",\n  \"amount\": 150,\n  \"paymentMethod\": \"credit_card\"\n}"
+            },
+            "url": {
+              "raw": "{{paymentsBaseUrl}}/payments/confirm",
+              "host": [
+                "{{paymentsBaseUrl}}"
+              ],
+              "path": [
+                "payments",
+                "confirm"
+              ]
+            },
+            "description": "Confirma el pago y publica el evento payment.confirmed en SNS."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Configuracion",
+      "item": [
+        {
+          "name": "Variables actuales",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ordersBaseUrl}}/orders",
+              "host": [
+                "{{ordersBaseUrl}}"
+              ],
+              "path": [
+                "orders"
+              ]
+            },
+            "description": "Variables incluidas en la coleccion: ordersBaseUrl y paymentsBaseUrl."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

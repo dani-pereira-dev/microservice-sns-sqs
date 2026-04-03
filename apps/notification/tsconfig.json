@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "../../",
+    "outDir": "../../dist/notification"
+  },
+  "include": ["src/**/*.ts", "../../libs/shared/src/**/*.ts"]
+}
