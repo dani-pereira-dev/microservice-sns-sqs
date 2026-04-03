@@ -14,6 +14,11 @@ import {
 import { formatOrdersLog } from '@shared/messaging/messaging-log.utils';
 import { OrdersRepository } from './orders.repository';
 
+export interface ApplyPaymentConfirmationResult {
+  order: Order;
+  alreadyProcessed: boolean;
+}
+
 @Injectable()
 export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
@@ -53,7 +58,9 @@ export class OrdersService {
     return this.ordersRepository.create(order);
   }
 
-  applyPaymentConfirmation(payment: PaymentConfirmation) {
+  applyPaymentConfirmation(
+    payment: PaymentConfirmation,
+  ): ApplyPaymentConfirmationResult {
     const order = this.ordersRepository.findById(payment.orderId);
 
     if (!order) {
@@ -62,7 +69,16 @@ export class OrdersService {
 
     if (order.status === "confirmed") {
       if (order.payment?.paymentId === payment.paymentId) {
-        return order;
+        this.logger.log(
+          formatOrdersLog(
+            `Order ${order.id} already confirmed by payment ${payment.paymentId}. Skipping duplicate processing.`,
+          ),
+        );
+
+        return {
+          order,
+          alreadyProcessed: true,
+        };
       }
 
       throw new BadRequestException(
@@ -93,7 +109,10 @@ export class OrdersService {
       ),
     );
 
-    return this.ordersRepository.save(order);
+    return {
+      order: this.ordersRepository.save(order),
+      alreadyProcessed: false,
+    };
   }
 
   private validateCreateOrderInput(input: CreateOrderRequest) {

@@ -53,11 +53,15 @@ export class OrdersEventsConsumer implements OnModuleInit {
         }
 
         try {
-          const confirmedOrder = this.ordersService.applyPaymentConfirmation(
-            event.payload,
-          );
+          const confirmationResult =
+            this.ordersService.applyPaymentConfirmation(event.payload);
+
+          if (confirmationResult.alreadyProcessed) {
+            return;
+          }
+
           await this.ordersEventsPublisher.publishOrderConfirmed(
-            confirmedOrder,
+            confirmationResult.order,
             event.payload,
           );
         } catch (error) {
