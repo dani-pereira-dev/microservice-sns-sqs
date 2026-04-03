@@ -19,6 +19,16 @@ export class OrdersService {
     return this.ordersRepository.list();
   }
 
+  getOrderById(orderId: string) {
+    const order = this.ordersRepository.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundException(`Order ${orderId} not found.`);
+    }
+
+    return order;
+  }
+
   createOrder(input: CreateOrderRequest) {
     this.validateCreateOrderInput(input);
 

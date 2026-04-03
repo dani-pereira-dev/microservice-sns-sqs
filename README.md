@@ -73,6 +73,18 @@ Resetear las bases SQLite locales:
 npm run db:reset
 ```
 
+Purgar las colas SQS del flujo:
+
+```bash
+npm run queues:purge
+```
+
+Reset completo de bases y colas:
+
+```bash
+npm run reset:all
+```
+
 El script `start:dev` primero cierra instancias previas de estos tres servicios y despues los vuelve a levantar juntos.
 
 Cada servicio usa un puerto por defecto:
@@ -113,8 +125,10 @@ Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas ac
 ## Endpoints disponibles
 
 - `GET /orders`
+- `GET /orders/:orderId`
 - `POST /orders`
 - `GET /payments`
+- `GET /payments/:paymentId`
 - `POST /payments/confirm`
 
 `notification` no expone endpoints de negocio en este flujo. Consume eventos desde SQS.
@@ -127,6 +141,8 @@ Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas ac
 4. SNS distribuye el evento a dos colas SQS.
 5. `orders` consume el evento y actualiza la orden a `confirmed`.
 6. `notification` consume el mismo evento y ejecuta un placeholder de notificacion.
+
+La respuesta de `POST /payments/confirm` representa la confirmacion del pago dentro de `payments` y la publicacion del evento, pero la confirmacion de la orden ocurre despues de forma asincrona en `orders`.
 
 `orders` ahora persiste localmente en SQLite. Por defecto usa `data/orders.sqlite`, asi que las ordenes sobreviven a reinicios del servicio.
 `payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.

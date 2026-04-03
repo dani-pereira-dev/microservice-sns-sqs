@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 import { ConfirmPaymentRequest } from "@shared/contracts/payments";
 import { PaymentsService } from "./payments.service";
 
@@ -9,6 +9,11 @@ export class PaymentsController {
   @Get()
   listPayments() {
     return this.paymentsService.listPayments();
+  }
+
+  @Get(":paymentId")
+  getPaymentById(@Param("paymentId") paymentId: string) {
+    return this.paymentsService.getPaymentById(paymentId);
   }
 
   @Post("confirm")

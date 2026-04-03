@@ -40,6 +40,31 @@
           "response": []
         },
         {
+          "name": "GET /orders/:orderId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{ordersBaseUrl}}/orders/:orderId",
+              "host": [
+                "{{ordersBaseUrl}}"
+              ],
+              "path": [
+                "orders",
+                ":orderId"
+              ],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "REEMPLAZAR_ORDER_ID"
+                }
+              ]
+            },
+            "description": "Obtiene una orden puntual por id."
+          },
+          "response": []
+        },
+        {
           "name": "POST /orders",
           "request": {
             "method": "POST",
@@ -90,6 +115,31 @@
           "response": []
         },
         {
+          "name": "GET /payments/:paymentId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{paymentsBaseUrl}}/payments/:paymentId",
+              "host": [
+                "{{paymentsBaseUrl}}"
+              ],
+              "path": [
+                "payments",
+                ":paymentId"
+              ],
+              "variable": [
+                {
+                  "key": "paymentId",
+                  "value": "REEMPLAZAR_PAYMENT_ID"
+                }
+              ]
+            },
+            "description": "Obtiene un pago puntual por id."
+          },
+          "response": []
+        },
+        {
           "name": "POST /payments/confirm",
           "request": {
             "method": "POST",
@@ -113,7 +163,7 @@
                 "confirm"
               ]
             },
-            "description": "Confirma el pago y publica el evento payment.confirmed en SNS."
+            "description": "Confirma el pago en payments, publica el evento payment.confirmed y deja explicito que la confirmacion de la orden sigue de forma asincrona."
           },
           "response": []
         }

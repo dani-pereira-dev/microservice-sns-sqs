@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   PAYMENT_CONFIRMED_EVENT,
@@ -26,6 +26,16 @@ export class PaymentsService {
     return this.paymentsRepository.list();
   }
 
+  getPaymentById(paymentId: string) {
+    const payment = this.paymentsRepository.findByPaymentId(paymentId);
+
+    if (!payment) {
+      throw new NotFoundException(`Payment ${paymentId} not found.`);
+    }
+
+    return payment;
+  }
+
   async confirmPayment(input: ConfirmPaymentRequest) {
     this.validateConfirmPaymentInput(input);
 
@@ -43,11 +53,16 @@ export class PaymentsService {
 
     return {
       status: 'accepted',
+      message:
+        'Payment confirmed in payments and event published. Order confirmation will continue asynchronously.',
       payment: paymentConfirmation,
       event: {
         eventId: event.eventId,
         eventType: event.eventType,
         occurredAt: event.occurredAt,
+      },
+      orderProcessing: {
+        status: 'pending_async_confirmation',
       },
     };
   }

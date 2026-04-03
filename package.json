@@ -5,6 +5,8 @@
   "scripts": {
     "start:dev": "node scripts/start-all-dev.js",
     "db:reset": "node scripts/reset-databases.js",
+    "queues:purge": "node scripts/purge-queues.js",
+    "reset:all": "npm run db:reset && npm run queues:purge",
     "build:orders": "tsc -p apps/orders/tsconfig.json && tsc-alias -p apps/orders/tsconfig.json",
     "build:payments": "tsc -p apps/payments/tsconfig.json && tsc-alias -p apps/payments/tsconfig.json",
     "build:notification": "tsc -p apps/notification/tsconfig.json && tsc-alias -p apps/notification/tsconfig.json",

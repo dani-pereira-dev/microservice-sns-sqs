@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { loadLocalEnvironment } = require('./load-env');
 
 function resolveDatabasePath(configuredPath, fallbackPath) {
   const finalPath = configuredPath || fallbackPath;
@@ -20,6 +21,8 @@ function removeIfExists(filePath) {
 }
 
 function main() {
+  loadLocalEnvironment();
+
   const ordersDbPath = resolveDatabasePath(
     process.env.ORDERS_DB_PATH,
     'data/orders.sqlite',
