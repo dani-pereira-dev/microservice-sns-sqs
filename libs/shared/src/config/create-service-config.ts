@@ -43,5 +43,10 @@ export function createServiceConfig(
       ordersDbPath: process.env.ORDERS_DB_PATH ?? 'data/orders.sqlite',
       paymentsDbPath: process.env.PAYMENTS_DB_PATH ?? 'data/payments.sqlite',
     },
+    notification: {
+      resendApiKey: process.env.RESEND_API_KEY,
+      emailFrom: process.env.NOTIFICATION_EMAIL_FROM ?? 'onboarding@resend.dev',
+      defaultToEmail: process.env.NOTIFICATION_DEFAULT_TO_EMAIL,
+    },
   };
 }

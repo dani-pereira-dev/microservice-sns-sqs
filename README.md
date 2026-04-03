@@ -119,8 +119,12 @@ Variables relevantes:
 - `AWS_SNS_PAYMENT_CONFIRMED_TOPIC_ARN`
 - `AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL`
 - `AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL`
+- `RESEND_API_KEY`
+- `NOTIFICATION_EMAIL_FROM`
+- `NOTIFICATION_DEFAULT_TO_EMAIL`
 
 Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas aca. El SDK tambien soporta la cadena default de credenciales de AWS. Si usas LocalStack, podes completar `AWS_ENDPOINT` y usar credenciales dummy.
+Para emails de desarrollo con Resend, podes usar `onboarding@resend.dev` como remitente inicial y definir un destinatario por defecto en `NOTIFICATION_DEFAULT_TO_EMAIL`.
 
 ## Endpoints disponibles
 
@@ -128,6 +132,7 @@ Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas ac
 - `GET /orders/:orderId`
 - `POST /orders`
 - `GET /payments`
+- `GET /payments/outbox`
 - `GET /payments/:paymentId`
 - `POST /payments/confirm`
 
@@ -140,7 +145,7 @@ Si usas credenciales locales de AWS CLI o IAM role, no hace falta duplicarlas ac
 3. `payments` publica el evento `payment.confirmed` en SNS.
 4. SNS distribuye el evento a dos colas SQS.
 5. `orders` consume el evento y actualiza la orden a `confirmed`.
-6. `notification` consume el mismo evento y ejecuta un placeholder de notificacion.
+6. `notification` consume el mismo evento y envia un email usando Resend.
 
 La respuesta de `POST /payments/confirm` representa la confirmacion del pago dentro de `payments` y la publicacion del evento, pero la confirmacion de la orden ocurre despues de forma asincrona en `orders`.
 

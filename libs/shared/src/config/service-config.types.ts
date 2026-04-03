@@ -18,8 +18,15 @@ export interface ServiceDatabaseConfig {
   paymentsDbPath: string;
 }
 
+export interface ServiceNotificationConfig {
+  resendApiKey?: string;
+  emailFrom: string;
+  defaultToEmail?: string;
+}
+
 export interface ServiceConfig {
   app: ServiceAppConfig;
   messaging: ServiceMessagingConfig;
   database: ServiceDatabaseConfig;
+  notification: ServiceNotificationConfig;
 }

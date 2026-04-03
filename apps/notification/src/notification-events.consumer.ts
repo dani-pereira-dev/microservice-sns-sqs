@@ -43,7 +43,7 @@ export class NotificationEventsConsumer implements OnModuleInit {
           return;
         }
 
-        this.notificationService.handlePaymentConfirmed(event.payload);
+        await this.notificationService.handlePaymentConfirmed(event.payload);
       },
     });
   }
