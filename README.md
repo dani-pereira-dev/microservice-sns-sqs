@@ -60,6 +60,7 @@ lambda/
     src/
       handler.ts
 docs/
+  entity-states.md
   notification-lambda-migration.md
 serverless.helpers.js
 serverless.yml
