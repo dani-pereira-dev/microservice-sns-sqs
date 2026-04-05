@@ -1,14 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { CartDatabase } from './cart-database';
 import { CartProductProjection } from '../domain/cart-product-projection';
-
-interface ProductProjectionRow {
-  id: string;
-  title: string;
-  price: number;
-  active: number;
-  updated_at: string;
-}
+import { ProductProjectionRow } from './cart.persistence.types';
 
 @Injectable()
 export class CartProductProjectionsRepository {

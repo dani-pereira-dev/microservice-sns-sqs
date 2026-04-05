@@ -1,16 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PaymentConfirmation } from '@shared/contracts/payments';
 import { PaymentsDatabase } from './payments-database';
-
-interface PaymentRow {
-  idempotency_key: string;
-  payment_id: string;
-  order_id: string;
-  amount: number;
-  payment_method: string;
-  status: 'confirmed';
-  confirmed_at: string;
-}
+import { PaymentRow } from './payments.persistence.types';
 
 @Injectable()
 export class PaymentsRepository {

@@ -5,15 +5,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { Product } from '@shared/contracts/products';
-
-interface ProductRow {
-  id: string;
-  title: string;
-  price: number;
-  active: number;
-  created_at: string;
-  updated_at: string;
-}
+import { ProductRow } from './products.persistence.types';
 
 @Injectable()
 export class ProductsRepository {

@@ -1,25 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { Cart, CartItem, CartStatus } from '@shared/contracts/cart';
+import { Cart, CartItem } from '@shared/contracts/cart';
 import { CartDatabase } from './cart-database';
-
-interface CartRow {
-  id: string;
-  customer_name: string;
-  status: CartStatus;
-  created_at: string;
-  updated_at: string;
-  checked_out_order_id: string | null;
-}
-
-interface CartItemRow {
-  id: string;
-  cart_id: string;
-  product_id: string;
-  product_title_snapshot: string;
-  unit_price: number;
-  quantity: number;
-  line_total: number;
-}
+import { CartItemRow, CartRow } from './cart.persistence.types';
 
 @Injectable()
 export class CartRepository {
