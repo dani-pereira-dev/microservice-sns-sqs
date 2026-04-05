@@ -4,6 +4,8 @@ import { CartCheckoutPublisher } from '../messaging/cart-checkout.publisher';
 import { CartController } from '../http/cart.controller';
 import { CartProductProjectionsRepository } from '../persistence/cart-product-projections.repository';
 import { CartRepository } from '../persistence/cart.repository';
+import { CartCommandService } from './cart-command.service';
+import { CartQueryService } from './cart-query.service';
 import { CartService } from './cart.service';
 
 @Module({
@@ -12,6 +14,8 @@ import { CartService } from './cart.service';
     CartDatabase,
     CartRepository,
     CartProductProjectionsRepository,
+    CartQueryService,
+    CartCommandService,
     CartService,
     CartCheckoutPublisher,
   ],

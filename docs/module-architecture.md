@@ -240,6 +240,9 @@ apps/products/src/
   domain/
     products.module.ts
     products.service.ts
+    products-query.service.ts
+    products-command.service.ts
+    products.domain.validators.ts
   http/
     products.controller.ts
   persistence/
@@ -248,7 +251,10 @@ apps/products/src/
 
 Que hace cada parte:
 
-- `domain/products.service.ts`: crea y actualiza productos
+- `domain/products.service.ts`: fachada liviana
+- `domain/products-query.service.ts`: lecturas del catalogo
+- `domain/products-command.service.ts`: altas y actualizaciones
+- `domain/products.domain.validators.ts`: validaciones de titulo, precio y existencia
 - `http/products.controller.ts`: expone endpoints del catalogo
 - `persistence/products.repository.ts`: persiste `products`
 
@@ -265,13 +271,19 @@ apps/notification/src/
   domain/
     notification.module.ts
     notification.service.ts
+    notification-command.service.ts
+    notification-email-content.builder.ts
+    notification.domain.validators.ts
   messaging/
     notification-events.consumer.ts
 ```
 
 Que hace cada parte:
 
-- `domain/notification.service.ts`: arma el contenido de la notificacion
+- `domain/notification.service.ts`: fachada liviana
+- `domain/notification-command.service.ts`: orquesta el envio del email
+- `domain/notification-email-content.builder.ts`: arma subject y body segun el evento
+- `domain/notification.domain.validators.ts`: valida configuracion minima para enviar
 - `messaging/notification-events.consumer.ts`: escucha eventos de estado final de la orden
 
 ## Regla simple para seguir creciendo
