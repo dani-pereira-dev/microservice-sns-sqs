@@ -48,7 +48,6 @@ export function createServiceConfig(
     },
     dependencies: {
       ordersBaseUrl: process.env.ORDERS_BASE_URL ?? 'http://localhost:3001',
-      productsBaseUrl: process.env.PRODUCTS_BASE_URL ?? 'http://localhost:3004',
     },
     notification: {
       resendApiKey: process.env.RESEND_API_KEY,

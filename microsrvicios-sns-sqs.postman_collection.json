@@ -361,7 +361,7 @@
                 }
               ]
             },
-            "description": "Agrega un item al carrito tomando snapshot del producto."
+            "description": "Agrega un item al carrito usando una product projection local del ms de cart."
           },
           "response": []
         },

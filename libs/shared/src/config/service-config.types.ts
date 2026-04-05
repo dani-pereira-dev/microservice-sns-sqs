@@ -23,7 +23,6 @@ export interface ServiceDatabaseConfig {
 
 export interface ServiceDependenciesConfig {
   ordersBaseUrl: string;
-  productsBaseUrl: string;
 }
 
 export interface ServiceNotificationConfig {

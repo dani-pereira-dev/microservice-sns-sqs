@@ -212,7 +212,6 @@ Podes sobreescribirlos con:
 - `PRODUCTS_DB_PATH`
 - `CART_DB_PATH`
 - `ORDERS_BASE_URL`
-- `PRODUCTS_BASE_URL`
 
 Si queres, tambien existe fallback a `PORT` cuando levantas un servicio de forma individual.
 
@@ -272,7 +271,7 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 
 1. Crear productos en `products`.
 2. Crear un carrito en `cart`.
-3. Agregar items al carrito usando snapshots de `products`.
+3. Agregar items al carrito usando `product_projections` locales dentro de `cart`.
 4. Ejecutar checkout del carrito; `cart` crea una orden en `orders`.
 5. Confirmar el pago en `payments` usando `orderId`; `payments` consulta a `orders` para tomar el total real.
 6. `payments` publica el evento `payment.confirmed` en SNS.
@@ -299,7 +298,7 @@ Los seeders escriben directo sobre esas bases locales ignoradas por git, asi que
 - Los contratos compartidos viven en `libs/shared/src/contracts`.
 - La mensajeria usa un `MessagingModule` pequeno con publisher SNS y consumer SQS.
 - `products` expone un catalogo HTTP simple.
-- `cart` orquesta el armado del carrito y el checkout por HTTP contra `products` y `orders`.
+- `cart` usa `product_projections` locales para armar el carrito y solo mantiene HTTP hacia `orders` para el checkout.
 - `payments` publica eventos; `orders` consume esos eventos y `notification-email` los procesa desde Lambda.
 - `orders` usa un repositorio simple con SQLite para persistir `order` y `order_items`.
 - `payments` usa su propio repositorio SQLite separado para persistir pagos confirmados.

@@ -12,13 +12,11 @@ import {
 } from '@shared/contracts/cart';
 import { CartRepository } from './cart.repository';
 import { OrdersClient } from './orders.client';
-import { ProductsClient } from './products.client';
 
 @Injectable()
 export class CartService {
   constructor(
     private readonly cartRepository: CartRepository,
-    private readonly productsClient: ProductsClient,
     private readonly ordersClient: OrdersClient,
   ) {}
 
@@ -76,7 +74,7 @@ export class CartService {
     this.validateQuantity(input.quantity);
 
     const cart = this.requireOpenCart(cartId);
-    const product = await this.productsClient.getProductById(input.productId);
+    const product = this.requireActiveProductProjection(input.productId);
     const existingItem = this.cartRepository.findItemByProductId(
       cart.id,
       product.id,
@@ -176,6 +174,25 @@ export class CartService {
     }
 
     return cart;
+  }
+
+  private requireActiveProductProjection(productId: string) {
+    const productProjection =
+      this.cartRepository.findProductProjectionById(productId);
+
+    if (!productProjection) {
+      throw new NotFoundException(
+        `Product projection ${productId} not found in cart.`,
+      );
+    }
+
+    if (!productProjection.active) {
+      throw new BadRequestException(
+        `Product projection ${productId} is not active in cart.`,
+      );
+    }
+
+    return productProjection;
   }
 
   private validateQuantity(quantity: number) {
