@@ -1,17 +1,18 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ServiceConfig } from '@shared/config/service-config.types';
+import { PaymentsDomainLogger } from '../domain/logging/payments-domain.logger';
 
 @Injectable()
 export class PaymentsDatabase {
-  private readonly logger = new Logger(PaymentsDatabase.name);
   readonly connection: Database.Database;
 
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
+    private readonly paymentsDomainLogger: PaymentsDomainLogger,
   ) {
     const configuredPath = this.configService.get('database.paymentsDbPath', {
       infer: true,
@@ -68,7 +69,9 @@ export class PaymentsDatabase {
       ON payment_outbox(status, created_at)
     `);
 
-    this.logger.log(`SQLite persistence enabled at ${databasePath}.`);
+    this.paymentsDomainLogger.log(
+      `SQLite persistence enabled at ${databasePath}.`,
+    );
   }
 
   runInTransaction<T>(callback: (database: Database.Database) => T) {

@@ -8,7 +8,7 @@ import {
   MessagingModuleOptions,
   PublishMessage,
 } from './messaging.interfaces';
-import { formatSnsLog } from './messaging-log.utils';
+import { formatSnsLog } from '../logging/log-format.utils';
 
 @Injectable()
 export class SnsMessagePublisher implements MessagePublisher {

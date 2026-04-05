@@ -1,19 +1,20 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { Product } from '@shared/contracts/products';
+import { ProductsDomainLogger } from '../domain/logging/products-domain.logger';
 import { ProductRow } from './products.persistence.types';
 
 @Injectable()
 export class ProductsRepository {
-  private readonly logger = new Logger(ProductsRepository.name);
   private readonly database: Database.Database;
 
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
+    private readonly productsDomainLogger: ProductsDomainLogger,
   ) {
     const configuredPath = this.configService.get('database.productsDbPath', {
       infer: true,
@@ -39,7 +40,9 @@ export class ProductsRepository {
       )
     `);
 
-    this.logger.log(`SQLite persistence enabled at ${databasePath}.`);
+    this.productsDomainLogger.log(
+      `SQLite persistence enabled at ${databasePath}.`,
+    );
   }
 
   list(): Product[] {

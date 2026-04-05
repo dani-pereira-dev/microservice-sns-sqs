@@ -1,18 +1,12 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { MESSAGE_PUBLISHER } from '@shared/messaging/messaging.constants';
 import { MessagePublisher } from '@shared/messaging/messaging.interfaces';
+import { PaymentsDomainLogger } from '../domain/logging/payments-domain.logger';
 import { handlePaymentsOutboxPublishError } from './payments-outbox.error-handlers';
 import { PaymentsOutboxRepository } from '../persistence/payments-outbox.repository';
 
 @Injectable()
 export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(PaymentsOutboxPublisher.name);
   private readonly pollingIntervalInMs = 5000;
   private readonly batchSize = 10;
   private processing = false;
@@ -22,6 +16,7 @@ export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
     @Inject(MESSAGE_PUBLISHER)
     private readonly messagePublisher: MessagePublisher,
     private readonly paymentsOutboxRepository: PaymentsOutboxRepository,
+    private readonly paymentsDomainLogger: PaymentsDomainLogger,
   ) {}
 
   onModuleInit() {
@@ -65,7 +60,7 @@ export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
           handlePaymentsOutboxPublishError({
             error,
             eventId: pendingEvent.eventId,
-            logger: this.logger,
+            domainLogger: this.paymentsDomainLogger,
             paymentsOutboxRepository: this.paymentsOutboxRepository,
           });
         }

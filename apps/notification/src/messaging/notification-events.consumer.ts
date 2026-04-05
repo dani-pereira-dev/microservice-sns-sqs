@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   ORDER_CONFIRMATION_FAILED_EVENT,
@@ -8,17 +8,17 @@ import {
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
 import { MessageConsumer } from '@shared/messaging/messaging.interfaces';
+import { NotificationDomainLogger } from '../domain/logging/notification-domain.logger';
 import { NotificationService } from '../domain/services/notification.service';
 
 @Injectable()
 export class NotificationEventsConsumer implements OnModuleInit {
-  private readonly logger = new Logger(NotificationEventsConsumer.name);
-
   constructor(
     @Inject(MESSAGE_CONSUMER)
     private readonly messageConsumer: MessageConsumer,
     private readonly configService: ConfigService<ServiceConfig, true>,
     private readonly notificationService: NotificationService,
+    private readonly notificationDomainLogger: NotificationDomainLogger,
   ) {}
 
   async onModuleInit() {
@@ -30,7 +30,7 @@ export class NotificationEventsConsumer implements OnModuleInit {
     );
 
     if (!queueUrl) {
-      this.logger.warn(
+      this.notificationDomainLogger.warn(
         'AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL is not configured. Notification consumer disabled.',
       );
       return;

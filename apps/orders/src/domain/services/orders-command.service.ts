@@ -1,18 +1,18 @@
-import { Injectable, Logger } from "@nestjs/common";
-import { CheckoutInitiatedPayload } from "@shared/contracts/events";
-import { PaymentConfirmation } from "@shared/contracts/payments";
-import { CreateOrderRequest, Order } from "@shared/contracts/orders";
-import { formatOrdersLog } from "@shared/messaging/messaging-log.utils";
-import { OrdersRepository } from "../../persistence/orders.repository";
+import { Injectable } from '@nestjs/common';
+import { CheckoutInitiatedPayload } from '@shared/contracts/events';
+import { PaymentConfirmation } from '@shared/contracts/payments';
+import { CreateOrderRequest, Order } from '@shared/contracts/orders';
+import { OrdersRepository } from '../../persistence/orders.repository';
 import {
   buildOrder,
   buildOrderWithPaymentConfirmation,
-} from "../builders/orders.domain.builders";
+} from '../builders/orders.domain.builders';
+import { OrdersDomainLogger } from '../logging/orders-domain.logger';
 import {
   ensureOrderCanReceivePayment,
   requireExistingOrderForPayment,
   validateCreateOrderInput,
-} from "../validators/orders.domain.validators";
+} from '../validators/orders.domain.validators';
 
 export interface ApplyPaymentConfirmationResult {
   order: Order;
@@ -21,9 +21,10 @@ export interface ApplyPaymentConfirmationResult {
 
 @Injectable()
 export class OrdersCommandService {
-  private readonly logger = new Logger(OrdersCommandService.name);
-
-  constructor(private readonly ordersRepository: OrdersRepository) {}
+  constructor(
+    private readonly ordersRepository: OrdersRepository,
+    private readonly ordersDomainLogger: OrdersDomainLogger,
+  ) {}
 
   createOrder(input: CreateOrderRequest) {
     validateCreateOrderInput(input);
@@ -40,10 +41,8 @@ export class OrdersCommandService {
     );
 
     if (existingOrder) {
-      this.logger.log(
-        formatOrdersLog(
-          `Checkout ${input.checkoutId} already created order ${existingOrder.id} for cart ${input.cartId}.`,
-        ),
+      this.ordersDomainLogger.log(
+        `Checkout ${input.checkoutId} already created order ${existingOrder.id} for cart ${input.cartId}.`,
       );
 
       return existingOrder;
@@ -65,11 +64,9 @@ export class OrdersCommandService {
     );
     const paymentAction = ensureOrderCanReceivePayment(order, payment);
 
-    if (paymentAction === "already_processed") {
-      this.logger.log(
-        formatOrdersLog(
-          `Order ${order.id} already confirmed by payment ${payment.paymentId}. Skipping duplicate processing.`,
-        ),
+    if (paymentAction === 'already_processed') {
+      this.ordersDomainLogger.log(
+        `Order ${order.id} already confirmed by payment ${payment.paymentId}. Skipping duplicate processing.`,
       );
 
       return {
@@ -85,10 +82,8 @@ export class OrdersCommandService {
       confirmedAt,
     );
 
-    this.logger.log(
-      formatOrdersLog(
-        `Order ${order.id} confirmed from payment ${payment.paymentId}.`,
-      ),
+    this.ordersDomainLogger.log(
+      `Order ${order.id} confirmed from payment ${payment.paymentId}.`,
     );
 
     return {

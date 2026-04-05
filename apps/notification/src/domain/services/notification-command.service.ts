@@ -1,10 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { OrderStatusEvent } from '@shared/contracts/events';
-import { formatNotificationLog } from '@shared/messaging/messaging-log.utils';
 import { buildNotificationEmailContent } from '../builders/notification-email-content.builder';
+import { NotificationDomainLogger } from '../logging/notification-domain.logger';
 import {
   requireNotificationRecipient,
   requireNotificationResendApiKey,
@@ -12,13 +12,13 @@ import {
 
 @Injectable()
 export class NotificationCommandService {
-  private readonly logger = new Logger(NotificationCommandService.name);
   private readonly resendApiKey?: string;
   private readonly emailFrom: string;
   private readonly defaultToEmail?: string;
 
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
+    private readonly notificationDomainLogger: NotificationDomainLogger,
   ) {
     this.resendApiKey = this.configService.get('notification.resendApiKey', {
       infer: true,
@@ -48,10 +48,8 @@ export class NotificationCommandService {
       text,
     });
 
-    this.logger.log(
-      formatNotificationLog(
-        `Email notification sent for ${event.eventType} and order ${event.payload.orderId} to ${to}.`,
-      ),
+    this.notificationDomainLogger.log(
+      `Email notification sent for ${event.eventType} and order ${event.payload.orderId} to ${to}.`,
     );
   }
 }

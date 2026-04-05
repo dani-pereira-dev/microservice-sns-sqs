@@ -13,7 +13,7 @@ import {
   MessageConsumer,
   SubscribeMessage,
 } from './messaging.interfaces';
-import { formatSqsLog } from './messaging-log.utils';
+import { formatSqsLog } from '../logging/log-format.utils';
 
 interface ActiveSubscription {
   stopped: boolean;

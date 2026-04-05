@@ -1,20 +1,20 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Order, OrderItem, OrderPaymentInfo } from '@shared/contracts/orders';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { formatOrdersLog } from '@shared/messaging/messaging-log.utils';
+import { OrdersDomainLogger } from '../domain/logging/orders-domain.logger';
 import { OrderItemRow, OrderRow } from './orders.persistence.types';
 
 @Injectable()
 export class OrdersRepository {
-  private readonly logger = new Logger(OrdersRepository.name);
   private readonly database: Database.Database;
 
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
+    private readonly ordersDomainLogger: OrdersDomainLogger,
   ) {
     const configuredPath = this.configService.get('database.ordersDbPath', {
       infer: true,
@@ -64,8 +64,8 @@ export class OrdersRepository {
       ON orders(source_cart_id)
     `);
 
-    this.logger.log(
-      formatOrdersLog(`SQLite persistence enabled at ${databasePath}.`),
+    this.ordersDomainLogger.log(
+      `SQLite persistence enabled at ${databasePath}.`,
     );
   }
 
