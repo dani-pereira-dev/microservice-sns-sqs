@@ -26,6 +26,23 @@ export class CartService {
     return this.cartRepository.list();
   }
 
+  listProductProjections() {
+    return this.cartRepository.listProductProjections();
+  }
+
+  getProductProjectionById(productId: string) {
+    const productProjection =
+      this.cartRepository.findProductProjectionById(productId);
+
+    if (!productProjection) {
+      throw new NotFoundException(
+        `Product projection ${productId} not found in cart.`,
+      );
+    }
+
+    return productProjection;
+  }
+
   getCartById(cartId: string) {
     const cart = this.cartRepository.findById(cartId);
 

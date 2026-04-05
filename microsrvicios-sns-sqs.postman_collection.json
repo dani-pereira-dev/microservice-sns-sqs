@@ -234,6 +234,51 @@
           "response": []
         },
         {
+          "name": "GET /carts/product-projections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts/product-projections",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "product-projections"
+              ]
+            },
+            "description": "Lista las product projections locales del ms de cart."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /carts/product-projections/:productId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{cartBaseUrl}}/carts/product-projections/:productId",
+              "host": [
+                "{{cartBaseUrl}}"
+              ],
+              "path": [
+                "carts",
+                "product-projections",
+                ":productId"
+              ],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "seed-product-0001"
+                }
+              ]
+            },
+            "description": "Obtiene una product projection local del ms de cart por id."
+          },
+          "response": []
+        },
+        {
           "name": "GET /carts/:cartId",
           "request": {
             "method": "GET",

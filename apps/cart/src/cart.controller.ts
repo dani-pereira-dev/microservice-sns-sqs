@@ -15,6 +15,16 @@ export class CartController {
     return this.cartService.listCarts();
   }
 
+  @Get('product-projections')
+  listProductProjections() {
+    return this.cartService.listProductProjections();
+  }
+
+  @Get('product-projections/:productId')
+  getProductProjectionById(@Param('productId') productId: string) {
+    return this.cartService.getProductProjectionById(productId);
+  }
+
   @Get(':cartId')
   getCartById(@Param('cartId') cartId: string) {
     return this.cartService.getCartById(cartId);
