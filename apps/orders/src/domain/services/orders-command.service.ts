@@ -3,13 +3,13 @@ import { CheckoutInitiatedPayload } from '@shared/contracts/events';
 import { PaymentConfirmation } from '@shared/contracts/payments';
 import { CreateOrderRequest, Order } from '@shared/contracts/orders';
 import { formatOrdersLog } from '@shared/messaging/messaging-log.utils';
-import { OrdersRepository } from '../persistence/orders.repository';
-import { buildOrder } from './orders.domain.builders';
+import { OrdersRepository } from '../../persistence/orders.repository';
+import { buildOrder } from '../builders/orders.domain.builders';
 import {
   ensureOrderCanReceivePayment,
   requireExistingOrderForPayment,
   validateCreateOrderInput,
-} from './orders.domain.validators';
+} from '../validators/orders.domain.validators';
 
 export interface ApplyPaymentConfirmationResult {
   order: Order;

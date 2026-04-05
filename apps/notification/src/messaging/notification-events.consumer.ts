@@ -8,7 +8,7 @@ import {
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
 import { MessageConsumer } from '@shared/messaging/messaging.interfaces';
-import { NotificationService } from '../domain/notification.service';
+import { NotificationService } from '../domain/services/notification.service';
 
 @Injectable()
 export class NotificationEventsConsumer implements OnModuleInit {

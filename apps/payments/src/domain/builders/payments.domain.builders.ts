@@ -3,7 +3,7 @@ import {
   PaymentConfirmedEvent,
 } from '@shared/contracts/events';
 import { PaymentConfirmation } from '@shared/contracts/payments';
-import { CreatePaymentAttemptInput } from './payments.domain.validators';
+import { CreatePaymentAttemptInput } from '../validators/payments.domain.validators';
 
 export const buildPaymentConfirmation = (
   input: CreatePaymentAttemptInput,

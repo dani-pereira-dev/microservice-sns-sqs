@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ProductsController } from '../http/products.controller';
 import { ProductsRepository } from '../persistence/products.repository';
-import { ProductsCommandService } from './products-command.service';
-import { ProductsQueryService } from './products-query.service';
-import { ProductsService } from './products.service';
+import { ProductsCommandService } from './services/products-command.service';
+import { ProductsQueryService } from './services/products-query.service';
+import { ProductsService } from './services/products.service';
 
 @Module({
   controllers: [ProductsController],

@@ -1,4 +1,4 @@
-import { createNotificationConfigurationError } from './notification.domain.errors';
+import { createNotificationConfigurationError } from '../error-handlers/notification.domain.errors';
 
 export const requireNotificationResendApiKey = (resendApiKey?: string) => {
   if (!resendApiKey) {

@@ -4,11 +4,11 @@ import { Resend } from 'resend';
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { OrderStatusEvent } from '@shared/contracts/events';
 import { formatNotificationLog } from '@shared/messaging/messaging-log.utils';
-import { buildNotificationEmailContent } from './notification-email-content.builder';
+import { buildNotificationEmailContent } from '../builders/notification-email-content.builder';
 import {
   requireNotificationRecipient,
   requireNotificationResendApiKey,
-} from './notification.domain.validators';
+} from '../validators/notification.domain.validators';
 
 @Injectable()
 export class NotificationCommandService {

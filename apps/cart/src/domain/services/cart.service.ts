@@ -4,7 +4,6 @@ import {
   CreateCartRequest,
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
-import { CheckoutInitiatedPayload } from '@shared/contracts/events';
 import { CartCommandService } from './cart-command.service';
 import { CartQueryService } from './cart-query.service';
 

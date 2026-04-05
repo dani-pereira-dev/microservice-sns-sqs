@@ -3,17 +3,17 @@ import {
   CreateProductRequest,
   UpdateProductRequest,
 } from '@shared/contracts/products';
-import { ProductsRepository } from '../persistence/products.repository';
+import { ProductsRepository } from '../../persistence/products.repository';
 import {
   buildProduct,
   buildUpdatedProduct,
-} from './products.domain.builders';
+} from '../builders/products.domain.builders';
 import {
   requireExistingProduct,
   validateProductPrice,
   validateProductTitle,
   validateUpdateProductInput,
-} from './products.domain.validators';
+} from '../validators/products.domain.validators';
 
 @Injectable()
 export class ProductsCommandService {

@@ -3,7 +3,7 @@ import {
   ORDER_CONFIRMED_EVENT,
   OrderStatusEvent,
 } from '@shared/contracts/events';
-import { createUnsupportedNotificationEventError } from './notification.domain.errors';
+import { createUnsupportedNotificationEventError } from '../error-handlers/notification.domain.errors';
 
 export interface NotificationEmailContent {
   subject: string;

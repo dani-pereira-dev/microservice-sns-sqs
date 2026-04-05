@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Cart } from '@shared/contracts/cart';
-import { CartProductProjection } from './cart-product-projection';
+import { CartProductProjection } from '../cart-product-projection';
 
 export const validateCreateCartInput = (customerName: string | undefined) => {
   if (!customerName?.trim()) {

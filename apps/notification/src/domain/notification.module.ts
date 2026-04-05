@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NotificationEventsConsumer } from '../messaging/notification-events.consumer';
-import { NotificationCommandService } from './notification-command.service';
-import { NotificationService } from './notification.service';
+import { NotificationCommandService } from './services/notification-command.service';
+import { NotificationService } from './services/notification.service';
 
 @Module({
   providers: [

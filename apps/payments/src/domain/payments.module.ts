@@ -6,9 +6,9 @@ import { PaymentsOutboxPublisher } from '../messaging/payments-outbox.publisher'
 import { PaymentsOutboxRepository } from '../persistence/payments-outbox.repository';
 import { PaymentsRepository } from '../persistence/payments.repository';
 import { PaymentsTransactionalRepository } from '../persistence/payments-transactional.repository';
-import { PaymentsCommandService } from './payments-command.service';
-import { PaymentsQueryService } from './payments-query.service';
-import { PaymentsService } from './payments.service';
+import { PaymentsCommandService } from './services/payments-command.service';
+import { PaymentsQueryService } from './services/payments-query.service';
+import { PaymentsService } from './services/payments.service';
 
 @Module({
   controllers: [PaymentsController],

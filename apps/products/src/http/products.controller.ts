@@ -3,7 +3,7 @@ import {
   CreateProductRequest,
   UpdateProductRequest,
 } from '@shared/contracts/products';
-import { ProductsService } from '../domain/products.service';
+import { ProductsService } from '../domain/services/products.service';
 
 @Controller('products')
 export class ProductsController {

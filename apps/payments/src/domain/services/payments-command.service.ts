@@ -6,19 +6,19 @@ import {
 } from '@shared/contracts/events';
 import { PaymentConfirmation } from '@shared/contracts/payments';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { PaymentsOutboxPublisher } from '../messaging/payments-outbox.publisher';
-import { PaymentsRepository } from '../persistence/payments.repository';
-import { PaymentsTransactionalRepository } from '../persistence/payments-transactional.repository';
+import { PaymentsOutboxPublisher } from '../../messaging/payments-outbox.publisher';
+import { PaymentsRepository } from '../../persistence/payments.repository';
+import { PaymentsTransactionalRepository } from '../../persistence/payments-transactional.repository';
 import {
   buildPaymentConfirmation,
   buildPaymentConfirmedEvent,
-} from './payments.domain.builders';
+} from '../builders/payments.domain.builders';
 import {
   CreatePaymentAttemptInput,
   ensureIdempotentRequestMatches,
   requirePaymentConfirmedTopicArn,
   validateCreatePaymentAttemptInput,
-} from './payments.domain.validators';
+} from '../validators/payments.domain.validators';
 
 @Injectable()
 export class PaymentsCommandService {

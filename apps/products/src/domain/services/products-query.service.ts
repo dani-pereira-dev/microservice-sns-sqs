@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ProductsRepository } from '../persistence/products.repository';
-import { requireExistingProduct } from './products.domain.validators';
+import { ProductsRepository } from '../../persistence/products.repository';
+import { requireExistingProduct } from '../validators/products.domain.validators';
 
 @Injectable()
 export class ProductsQueryService {

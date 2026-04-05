@@ -9,7 +9,7 @@ import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
 import { MessageConsumer } from '@shared/messaging/messaging.interfaces';
 import { OrdersEventsPublisher } from './orders-events.publisher';
 import { resolveOrderConfirmationFailure } from './orders-events.error-handlers';
-import { OrdersService } from '../domain/orders.service';
+import { OrdersService } from '../domain/services/orders.service';
 
 @Injectable()
 export class OrdersEventsConsumer implements OnModuleInit {

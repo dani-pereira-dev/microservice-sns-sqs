@@ -4,16 +4,16 @@ import {
   CreateCartRequest,
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
-import { CartCheckoutPublisher } from '../messaging/cart-checkout.publisher';
-import { CartProductProjectionsRepository } from '../persistence/cart-product-projections.repository';
-import { CartRepository } from '../persistence/cart.repository';
+import { CartCheckoutPublisher } from '../../messaging/cart-checkout.publisher';
+import { CartProductProjectionsRepository } from '../../persistence/cart-product-projections.repository';
+import { CartRepository } from '../../persistence/cart.repository';
 import {
   buildCart,
   buildCartItem,
   buildCheckoutInitiatedPayload,
   buildUpdatedCartItem,
-} from './cart.domain.builders';
-import { rollbackCartAfterCheckoutPublishError } from './cart.domain.error-handlers';
+} from '../builders/cart.domain.builders';
+import { rollbackCartAfterCheckoutPublishError } from '../error-handlers/cart.domain.error-handlers';
 import { CartQueryService } from './cart-query.service';
 import {
   ensureCartHasItemsForCheckout,
@@ -23,7 +23,7 @@ import {
   ensureProductProjectionIsActive,
   validateCartItemQuantity,
   validateCreateCartInput,
-} from './cart.domain.validators';
+} from '../validators/cart.domain.validators';
 
 @Injectable()
 export class CartCommandService {

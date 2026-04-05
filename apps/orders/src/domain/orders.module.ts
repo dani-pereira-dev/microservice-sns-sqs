@@ -4,9 +4,9 @@ import { OrdersEventsPublisher } from '../messaging/orders-events.publisher';
 import { OrdersController } from '../http/orders.controller';
 import { OrdersEventsConsumer } from '../messaging/orders-events.consumer';
 import { OrdersRepository } from '../persistence/orders.repository';
-import { OrdersCommandService } from './orders-command.service';
-import { OrdersQueryService } from './orders-query.service';
-import { OrdersService } from './orders.service';
+import { OrdersCommandService } from './services/orders-command.service';
+import { OrdersQueryService } from './services/orders-query.service';
+import { OrdersService } from './services/orders.service';
 
 @Module({
   controllers: [OrdersController],

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PaymentsOutboxRepository } from '../persistence/payments-outbox.repository';
-import { PaymentsRepository } from '../persistence/payments.repository';
-import { requireExistingPayment } from './payments.domain.validators';
+import { PaymentsOutboxRepository } from '../../persistence/payments-outbox.repository';
+import { PaymentsRepository } from '../../persistence/payments.repository';
+import { requireExistingPayment } from '../validators/payments.domain.validators';
 
 @Injectable()
 export class PaymentsQueryService {

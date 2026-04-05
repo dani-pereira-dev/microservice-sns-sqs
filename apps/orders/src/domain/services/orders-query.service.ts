@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { OrdersRepository } from '../persistence/orders.repository';
-import { requireExistingOrder } from './orders.domain.validators';
+import { OrdersRepository } from '../../persistence/orders.repository';
+import { requireExistingOrder } from '../validators/orders.domain.validators';
 
 @Injectable()
 export class OrdersQueryService {

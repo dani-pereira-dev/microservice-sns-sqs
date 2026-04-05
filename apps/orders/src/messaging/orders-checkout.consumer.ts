@@ -8,7 +8,7 @@ import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
 import { MessageConsumer } from '@shared/messaging/messaging.interfaces';
 import { OrdersEventsPublisher } from './orders-events.publisher';
-import { OrdersService } from '../domain/orders.service';
+import { OrdersService } from '../domain/services/orders.service';
 
 @Injectable()
 export class OrdersCheckoutConsumer implements OnModuleInit {

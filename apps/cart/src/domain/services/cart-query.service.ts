@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CartProductProjectionsRepository } from '../persistence/cart-product-projections.repository';
-import { CartRepository } from '../persistence/cart.repository';
+import { CartProductProjectionsRepository } from '../../persistence/cart-product-projections.repository';
+import { CartRepository } from '../../persistence/cart.repository';
 import {
   ensureExistingCart,
   ensureExistingProductProjection,
-} from './cart.domain.validators';
+} from '../validators/cart.domain.validators';
 
 @Injectable()
 export class CartQueryService {

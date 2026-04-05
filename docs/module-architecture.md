@@ -44,13 +44,25 @@ Responsabilidad:
 
 Aca vive el nucleo del microservicio.
 
+Estructura tipica (por rol):
+
+```text
+domain/
+  *.module.ts
+  services/
+  validators/
+  builders/
+  error-handlers/   (cuando aplica)
+```
+
 Debe contener:
 
-- `*.module.ts` del dominio
-- `*.service.ts` con reglas de negocio
-- `*.validators.ts` o `*.guards.ts` con validaciones y precondiciones del dominio
-- `*.builders.ts` cuando el dominio arma entidades, snapshots o payloads repetitivos
-- tipos o modelos propios del dominio si no son compartidos
+- `*.module.ts` del dominio en la raiz de `domain/`
+- `services/` con la fachada (`*.service.ts`), comandos (`*-command.service.ts`) y consultas (`*-query.service.ts`)
+- `validators/` con `*.domain.validators.ts` (validaciones y precondiciones que lanzan excepciones)
+- `builders/` con `*.domain.builders.ts` o builders nombrados por caso de uso
+- `error-handlers/` con factories de errores o helpers de rollback cuando aplica
+- tipos o modelos propios del dominio en la raiz de `domain/` si no son compartidos
 
 No deberia contener:
 
@@ -120,11 +132,14 @@ apps/orders/src/
   main.ts
   domain/
     orders.module.ts
-    orders.service.ts
-    orders-query.service.ts
-    orders-command.service.ts
-    orders.domain.validators.ts
-    orders.domain.builders.ts
+    services/
+      orders.service.ts
+      orders-query.service.ts
+      orders-command.service.ts
+    validators/
+      orders.domain.validators.ts
+    builders/
+      orders.domain.builders.ts
   http/
     orders.controller.ts
   messaging/
@@ -137,11 +152,11 @@ apps/orders/src/
 
 Que hace cada parte:
 
-- `domain/orders.service.ts`: fachada liviana para controladores y consumers
-- `domain/orders-query.service.ts`: lecturas de ordenes
-- `domain/orders-command.service.ts`: creacion y confirmacion
-- `domain/orders.domain.validators.ts`: validaciones de input y reglas previas a confirmar
-- `domain/orders.domain.builders.ts`: construccion de `Order` y `OrderItem`
+- `domain/services/orders.service.ts`: fachada liviana para controladores y consumers
+- `domain/services/orders-query.service.ts`: lecturas de ordenes
+- `domain/services/orders-command.service.ts`: creacion y confirmacion
+- `domain/validators/orders.domain.validators.ts`: validaciones de input y reglas previas a confirmar
+- `domain/builders/orders.domain.builders.ts`: construccion de `Order` y `OrderItem`
 - `http/orders.controller.ts`: expone `GET /orders`, `GET /orders/:id` y `POST /orders`
 - `messaging/orders-checkout.consumer.ts`: escucha `checkout.initiated`
 - `messaging/orders-events.consumer.ts`: escucha `payment.confirmed`
@@ -160,11 +175,14 @@ apps/payments/src/
   main.ts
   domain/
     payments.module.ts
-    payments.service.ts
-    payments-query.service.ts
-    payments-command.service.ts
-    payments.domain.validators.ts
-    payments.domain.builders.ts
+    services/
+      payments.service.ts
+      payments-query.service.ts
+      payments-command.service.ts
+    validators/
+      payments.domain.validators.ts
+    builders/
+      payments.domain.builders.ts
   http/
     payments.controller.ts
   messaging/
@@ -179,11 +197,11 @@ apps/payments/src/
 
 Que hace cada parte:
 
-- `domain/payments.service.ts`: fachada liviana
-- `domain/payments-query.service.ts`: lecturas de pagos y outbox
-- `domain/payments-command.service.ts`: confirmacion automatica, idempotencia y publicacion logica
-- `domain/payments.domain.validators.ts`: validaciones e invariantes de confirmacion
-- `domain/payments.domain.builders.ts`: construccion de `PaymentConfirmation` y `payment.confirmed`
+- `domain/services/payments.service.ts`: fachada liviana
+- `domain/services/payments-query.service.ts`: lecturas de pagos y outbox
+- `domain/services/payments-command.service.ts`: confirmacion automatica, idempotencia y publicacion logica
+- `domain/validators/payments.domain.validators.ts`: validaciones e invariantes de confirmacion
+- `domain/builders/payments.domain.builders.ts`: construccion de `PaymentConfirmation` y `payment.confirmed`
 - `http/payments.controller.ts`: expone lectura de pagos y outbox
 - `messaging/payments-events.consumer.ts`: escucha `order.created`
 - `messaging/payments-outbox.publisher.ts`: publica eventos pendientes del outbox
@@ -204,12 +222,17 @@ apps/cart/src/
   main.ts
   domain/
     cart.module.ts
-    cart.service.ts
-    cart-query.service.ts
-    cart-command.service.ts
-    cart.domain.validators.ts
-    cart.domain.builders.ts
     cart-product-projection.ts
+    services/
+      cart.service.ts
+      cart-query.service.ts
+      cart-command.service.ts
+    validators/
+      cart.domain.validators.ts
+    builders/
+      cart.domain.builders.ts
+    error-handlers/
+      cart.domain.error-handlers.ts
   http/
     cart.controller.ts
   messaging/
@@ -222,11 +245,12 @@ apps/cart/src/
 
 Que hace cada parte:
 
-- `domain/cart.service.ts`: fachada liviana
-- `domain/cart-query.service.ts`: lecturas de carrito y proyecciones
-- `domain/cart-command.service.ts`: mutaciones de carrito y checkout
-- `domain/cart.domain.validators.ts`: validaciones de cantidad, estado del carrito y disponibilidad local
-- `domain/cart.domain.builders.ts`: construccion de `Cart`, `CartItem` y `checkoutPayload`
+- `domain/services/cart.service.ts`: fachada liviana
+- `domain/services/cart-query.service.ts`: lecturas de carrito y proyecciones
+- `domain/services/cart-command.service.ts`: mutaciones de carrito y checkout
+- `domain/validators/cart.domain.validators.ts`: validaciones de cantidad, estado del carrito y disponibilidad local
+- `domain/builders/cart.domain.builders.ts`: construccion de `Cart`, `CartItem` y `checkoutPayload`
+- `domain/error-handlers/cart.domain.error-handlers.ts`: rollback ante fallo al publicar checkout
 - `domain/cart-product-projection.ts`: tipo minimo del producto proyectado
 - `http/cart.controller.ts`: expone endpoints de carrito y de `product-projections`
 - `messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
@@ -246,11 +270,14 @@ apps/products/src/
   main.ts
   domain/
     products.module.ts
-    products.service.ts
-    products-query.service.ts
-    products-command.service.ts
-    products.domain.validators.ts
-    products.domain.builders.ts
+    services/
+      products.service.ts
+      products-query.service.ts
+      products-command.service.ts
+    validators/
+      products.domain.validators.ts
+    builders/
+      products.domain.builders.ts
   http/
     products.controller.ts
   persistence/
@@ -259,11 +286,11 @@ apps/products/src/
 
 Que hace cada parte:
 
-- `domain/products.service.ts`: fachada liviana
-- `domain/products-query.service.ts`: lecturas del catalogo
-- `domain/products-command.service.ts`: altas y actualizaciones
-- `domain/products.domain.validators.ts`: validaciones de titulo, precio y existencia
-- `domain/products.domain.builders.ts`: construccion de `Product` y actualizaciones
+- `domain/services/products.service.ts`: fachada liviana
+- `domain/services/products-query.service.ts`: lecturas del catalogo
+- `domain/services/products-command.service.ts`: altas y actualizaciones
+- `domain/validators/products.domain.validators.ts`: validaciones de titulo, precio y existencia
+- `domain/builders/products.domain.builders.ts`: construccion de `Product` y actualizaciones
 - `http/products.controller.ts`: expone endpoints del catalogo
 - `persistence/products.repository.ts`: persiste `products`
 
@@ -279,29 +306,36 @@ apps/notification/src/
   main.ts
   domain/
     notification.module.ts
-    notification.service.ts
-    notification-command.service.ts
-    notification-email-content.builder.ts
-    notification.domain.validators.ts
+    services/
+      notification.service.ts
+      notification-command.service.ts
+    validators/
+      notification.domain.validators.ts
+    builders/
+      notification-email-content.builder.ts
+    error-handlers/
+      notification.domain.errors.ts
   messaging/
     notification-events.consumer.ts
 ```
 
 Que hace cada parte:
 
-- `domain/notification.service.ts`: fachada liviana
-- `domain/notification-command.service.ts`: orquesta el envio del email
-- `domain/notification-email-content.builder.ts`: arma subject y body segun el evento
-- `domain/notification.domain.validators.ts`: valida configuracion minima para enviar
+- `domain/services/notification.service.ts`: fachada liviana
+- `domain/services/notification-command.service.ts`: orquesta el envio del email
+- `domain/builders/notification-email-content.builder.ts`: arma subject y body segun el evento
+- `domain/validators/notification.domain.validators.ts`: valida configuracion minima para enviar
+- `domain/error-handlers/notification.domain.errors.ts`: factories de errores de configuracion o evento no soportado
 - `messaging/notification-events.consumer.ts`: escucha eventos de estado final de la orden
 
 ## Regla simple para seguir creciendo
 
 Cuando agregues un archivo nuevo, usa esta regla:
 
-- si decide reglas de negocio: `domain/`
-- si valida invariantes y lanza excepciones del dominio: `domain/*validators.ts`
-- si arma entidades o payloads repetitivos: `domain/*builders.ts`
+- si decide reglas de negocio: `domain/services/`
+- si valida invariantes y lanza excepciones del dominio: `domain/validators/*validators.ts`
+- si arma entidades o payloads repetitivos: `domain/builders/*builders.ts`
+- si centraliza errores de dominio o rollback: `domain/error-handlers/`
 - si recibe o responde HTTP: `http/`
 - si consume o publica eventos: `messaging/`
 - si toca SQLite o queries: `persistence/`
@@ -311,8 +345,9 @@ Cuando agregues un archivo nuevo, usa esta regla:
 
 - `main.ts` y `app.module.ts` quedan solos en la raiz
 - `domain` contiene negocio
-- `domain` tambien puede contener validators/guards del dominio
-- `domain` tambien puede contener builders del dominio
+- `domain/services` agrupa fachada, comandos y consultas
+- `domain/validators` y `domain/builders` mantienen el dominio legible
+- `domain/error-handlers` agrupa errores y recuperacion cuando aplica
 - `http` contiene controllers
 - `messaging` contiene SNS/SQS
 - `persistence` contiene SQLite y repositorios

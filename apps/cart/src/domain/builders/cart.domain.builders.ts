@@ -5,7 +5,7 @@ import {
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
 import { CheckoutInitiatedPayload } from '@shared/contracts/events';
-import { CartProductProjection } from './cart-product-projection';
+import { CartProductProjection } from '../cart-product-projection';
 
 export const buildCart = (
   input: CreateCartRequest,
