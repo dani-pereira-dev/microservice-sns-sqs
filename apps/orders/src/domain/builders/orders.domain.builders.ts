@@ -1,3 +1,4 @@
+import { PaymentConfirmation } from '@shared/contracts/payments';
 import {
   CreateOrderItemRequest,
   CreateOrderRequest,
@@ -31,3 +32,19 @@ export const buildOrder = (
     sourceCartId: input.sourceCartId?.trim() || undefined,
   };
 };
+
+export const buildOrderWithPaymentConfirmation = (
+  order: Order,
+  payment: PaymentConfirmation,
+  confirmedAt: string,
+): Order => ({
+  ...order,
+  status: 'confirmed',
+  updatedAt: confirmedAt,
+  payment: {
+    paymentId: payment.paymentId,
+    amount: payment.amount,
+    paymentMethod: payment.paymentMethod.trim(),
+    confirmedAt,
+  },
+});
