@@ -11,13 +11,15 @@ import {
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
 import { CheckoutInitiatedPayload } from '@shared/contracts/events';
-import { CartCheckoutPublisher } from './cart-checkout.publisher';
-import { CartRepository } from './cart.repository';
+import { CartCheckoutPublisher } from '../messaging/cart-checkout.publisher';
+import { CartProductProjectionsRepository } from '../persistence/cart-product-projections.repository';
+import { CartRepository } from '../persistence/cart.repository';
 
 @Injectable()
 export class CartService {
   constructor(
     private readonly cartRepository: CartRepository,
+    private readonly cartProductProjectionsRepository: CartProductProjectionsRepository,
     private readonly cartCheckoutPublisher: CartCheckoutPublisher,
   ) {}
 
@@ -26,12 +28,12 @@ export class CartService {
   }
 
   listProductProjections() {
-    return this.cartRepository.listProductProjections();
+    return this.cartProductProjectionsRepository.list();
   }
 
   getProductProjectionById(productId: string) {
     const productProjection =
-      this.cartRepository.findProductProjectionById(productId);
+      this.cartProductProjectionsRepository.findById(productId);
 
     if (!productProjection) {
       throw new NotFoundException(
@@ -194,7 +196,7 @@ export class CartService {
 
   private requireActiveProductProjection(productId: string) {
     const productProjection =
-      this.cartRepository.findProductProjectionById(productId);
+      this.cartProductProjectionsRepository.findById(productId);
 
     if (!productProjection) {
       throw new NotFoundException(

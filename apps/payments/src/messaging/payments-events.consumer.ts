@@ -7,7 +7,7 @@ import {
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
 import { MessageConsumer } from '@shared/messaging/messaging.interfaces';
-import { PaymentsService } from './payments.service';
+import { PaymentsService } from '../domain/payments.service';
 
 @Injectable()
 export class PaymentsEventsConsumer implements OnModuleInit {

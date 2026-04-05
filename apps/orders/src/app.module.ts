@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { createServiceConfig } from '@shared/config/create-service-config';
 import { MessagingModule } from '@shared/messaging/messaging.module';
-import { OrdersModule } from './orders.module';
+import { OrdersModule } from './domain/orders.module';
 
 @Module({
   imports: [

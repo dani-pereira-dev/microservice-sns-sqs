@@ -13,7 +13,7 @@ import {
   OrderItem,
 } from '@shared/contracts/orders';
 import { formatOrdersLog } from '@shared/messaging/messaging-log.utils';
-import { OrdersRepository } from './orders.repository';
+import { OrdersRepository } from '../persistence/orders.repository';
 
 export interface ApplyPaymentConfirmationResult {
   order: Order;

@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { MESSAGE_PUBLISHER } from '@shared/messaging/messaging.constants';
 import { MessagePublisher } from '@shared/messaging/messaging.interfaces';
-import { PaymentsRepository } from './payments.repository';
+import { PaymentsOutboxRepository } from '../persistence/payments-outbox.repository';
 
 @Injectable()
 export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
@@ -20,7 +20,7 @@ export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject(MESSAGE_PUBLISHER)
     private readonly messagePublisher: MessagePublisher,
-    private readonly paymentsRepository: PaymentsRepository,
+    private readonly paymentsOutboxRepository: PaymentsOutboxRepository,
   ) {}
 
   onModuleInit() {
@@ -47,7 +47,7 @@ export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
     this.processing = true;
 
     try {
-      const pendingEvents = this.paymentsRepository.listPendingOutboxEvents(
+      const pendingEvents = this.paymentsOutboxRepository.listPendingEvents(
         this.batchSize,
       );
 
@@ -59,12 +59,12 @@ export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
             attributes: pendingEvent.attributes,
           });
 
-          this.paymentsRepository.markOutboxEventPublished(pendingEvent.eventId);
+          this.paymentsOutboxRepository.markPublished(pendingEvent.eventId);
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
 
-          this.paymentsRepository.markOutboxEventFailed(
+          this.paymentsOutboxRepository.markFailed(
             pendingEvent.eventId,
             errorMessage,
           );

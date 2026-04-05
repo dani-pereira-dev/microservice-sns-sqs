@@ -13,8 +13,10 @@ import {
 } from '@shared/contracts/events';
 import { PaymentConfirmation } from '@shared/contracts/payments';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { PaymentsOutboxPublisher } from './payments-outbox.publisher';
-import { PaymentsRepository } from './payments.repository';
+import { PaymentsOutboxRepository } from '../persistence/payments-outbox.repository';
+import { PaymentsOutboxPublisher } from '../messaging/payments-outbox.publisher';
+import { PaymentsRepository } from '../persistence/payments.repository';
+import { PaymentsTransactionalRepository } from '../persistence/payments-transactional.repository';
 
 interface CreatePaymentAttemptInput {
   idempotencyKey: string;
@@ -28,6 +30,8 @@ export class PaymentsService {
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
     private readonly paymentsRepository: PaymentsRepository,
+    private readonly paymentsOutboxRepository: PaymentsOutboxRepository,
+    private readonly paymentsTransactionalRepository: PaymentsTransactionalRepository,
     private readonly paymentsOutboxPublisher: PaymentsOutboxPublisher,
   ) {}
 
@@ -36,7 +40,7 @@ export class PaymentsService {
   }
 
   listOutboxEvents() {
-    return this.paymentsRepository.listOutboxEvents();
+    return this.paymentsOutboxRepository.listOutboxEvents();
   }
 
   getPaymentById(paymentId: string) {
@@ -89,7 +93,11 @@ export class PaymentsService {
     const event = this.buildPaymentConfirmedEvent(paymentConfirmation);
     const topicArn = this.getPaymentConfirmedTopicArn();
 
-    this.paymentsRepository.createWithOutbox(paymentConfirmation, event, topicArn);
+    this.paymentsTransactionalRepository.createWithOutbox(
+      paymentConfirmation,
+      event,
+      topicArn,
+    );
     void this.paymentsOutboxPublisher.publishPendingEvents();
 
     return paymentConfirmation;

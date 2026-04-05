@@ -8,7 +8,7 @@ import {
   Product,
   UpdateProductRequest,
 } from '@shared/contracts/products';
-import { ProductsRepository } from './products.repository';
+import { ProductsRepository } from '../persistence/products.repository';
 
 @Injectable()
 export class ProductsService {

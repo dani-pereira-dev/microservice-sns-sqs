@@ -4,7 +4,7 @@ import {
   CreateCartRequest,
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
-import { CartService } from './cart.service';
+import { CartService } from '../domain/cart.service';
 
 @Controller('carts')
 export class CartController {
