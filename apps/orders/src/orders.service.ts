@@ -4,6 +4,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { CheckoutInitiatedPayload } from '@shared/contracts/events';
 import { PaymentConfirmation } from "@shared/contracts/payments";
 import {
   CreateOrderItemRequest,
@@ -56,6 +57,26 @@ export class OrdersService {
     };
 
     return this.ordersRepository.create(order);
+  }
+
+  createOrderFromCheckout(input: CheckoutInitiatedPayload) {
+    const existingOrder = this.ordersRepository.findBySourceCartId(input.cartId);
+
+    if (existingOrder) {
+      this.logger.log(
+        formatOrdersLog(
+          `Checkout ${input.checkoutId} already created order ${existingOrder.id} for cart ${input.cartId}.`,
+        ),
+      );
+
+      return existingOrder;
+    }
+
+    return this.createOrder({
+      customerName: input.customerName,
+      items: input.items,
+      sourceCartId: input.cartId,
+    });
   }
 
   applyPaymentConfirmation(

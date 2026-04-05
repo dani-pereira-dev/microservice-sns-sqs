@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
+import { CartCheckoutPublisher } from './cart-checkout.publisher';
 import { CartController } from './cart.controller';
 import { CartRepository } from './cart.repository';
 import { CartService } from './cart.service';
-import { OrdersClient } from './orders.client';
 
 @Module({
   controllers: [CartController],
-  providers: [CartRepository, CartService, OrdersClient],
+  providers: [CartRepository, CartService, CartCheckoutPublisher],
 })
 export class CartModule {}

@@ -33,8 +33,15 @@ export function createServiceConfig(
       transport: 'sns-sqs',
       region: process.env.AWS_REGION ?? 'us-east-1',
       endpoint: process.env.AWS_ENDPOINT,
+      checkoutInitiatedTopicArn:
+        process.env.AWS_SNS_CHECKOUT_INITIATED_TOPIC_ARN,
+      orderCreatedTopicArn: process.env.AWS_SNS_ORDER_CREATED_TOPIC_ARN,
       paymentConfirmedTopicArn: process.env.AWS_SNS_PAYMENT_CONFIRMED_TOPIC_ARN,
       orderStatusTopicArn: process.env.AWS_SNS_ORDER_STATUS_TOPIC_ARN,
+      ordersCheckoutInitiatedQueueUrl:
+        process.env.AWS_SQS_ORDERS_CHECKOUT_INITIATED_QUEUE_URL,
+      paymentsOrderCreatedQueueUrl:
+        process.env.AWS_SQS_PAYMENTS_ORDER_CREATED_QUEUE_URL,
       ordersPaymentConfirmedQueueUrl:
         process.env.AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL,
       notificationOrderStatusQueueUrl:
@@ -45,9 +52,6 @@ export function createServiceConfig(
       paymentsDbPath: process.env.PAYMENTS_DB_PATH ?? 'data/payments.sqlite',
       productsDbPath: process.env.PRODUCTS_DB_PATH ?? 'data/products.sqlite',
       cartDbPath: process.env.CART_DB_PATH ?? 'data/cart.sqlite',
-    },
-    dependencies: {
-      ordersBaseUrl: process.env.ORDERS_BASE_URL ?? 'http://localhost:3001',
     },
     notification: {
       resendApiKey: process.env.RESEND_API_KEY,

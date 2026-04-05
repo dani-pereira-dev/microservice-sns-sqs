@@ -1,8 +1,10 @@
 import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
+  ORDER_CREATED_EVENT,
   ORDER_CONFIRMED_EVENT,
   ORDER_CONFIRMATION_FAILED_EVENT,
+  OrderCreatedEvent,
   OrderConfirmationFailedEvent,
   OrderConfirmedEvent,
 } from '@shared/contracts/events';
@@ -19,6 +21,26 @@ export class OrdersEventsPublisher {
     private readonly messagePublisher: MessagePublisher,
     private readonly configService: ConfigService<ServiceConfig, true>,
   ) {}
+
+  async publishOrderCreated(order: Order, checkoutId?: string) {
+    const event: OrderCreatedEvent = {
+      eventId: crypto.randomUUID(),
+      eventType: ORDER_CREATED_EVENT,
+      occurredAt: new Date().toISOString(),
+      source: 'orders',
+      payload: {
+        checkoutId,
+        orderId: order.id,
+        customerName: order.customerName,
+        items: order.items,
+        amount: order.amount,
+        sourceCartId: order.sourceCartId,
+        createdAt: order.createdAt,
+      },
+    };
+
+    await this.publishOrderCreatedEvent(event);
+  }
 
   async publishOrderConfirmed(order: Order, payment: PaymentConfirmation) {
     const persistedPayment = order.payment;
@@ -43,7 +65,7 @@ export class OrdersEventsPublisher {
       },
     };
 
-    await this.publish(event);
+    await this.publishOrderStatus(event);
   }
 
   async publishOrderConfirmationFailed(
@@ -63,10 +85,31 @@ export class OrdersEventsPublisher {
       },
     };
 
-    await this.publish(event);
+    await this.publishOrderStatus(event);
   }
 
-  private async publish<
+  private async publishOrderCreatedEvent(event: OrderCreatedEvent) {
+    const topicArn = this.configService.get('messaging.orderCreatedTopicArn', {
+      infer: true,
+    });
+
+    if (!topicArn) {
+      throw new InternalServerErrorException(
+        'AWS_SNS_ORDER_CREATED_TOPIC_ARN is not configured.',
+      );
+    }
+
+    await this.messagePublisher.publish({
+      topicArn,
+      message: event,
+      attributes: {
+        eventType: event.eventType,
+        source: event.source,
+      },
+    });
+  }
+
+  private async publishOrderStatus<
     TEvent extends OrderConfirmedEvent | OrderConfirmationFailedEvent,
   >(event: TEvent) {
     const topicArn = this.configService.get('messaging.orderStatusTopicArn', {

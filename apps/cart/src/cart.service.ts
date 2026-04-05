@@ -10,14 +10,15 @@ import {
   CreateCartRequest,
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
+import { CheckoutInitiatedPayload } from '@shared/contracts/events';
+import { CartCheckoutPublisher } from './cart-checkout.publisher';
 import { CartRepository } from './cart.repository';
-import { OrdersClient } from './orders.client';
 
 @Injectable()
 export class CartService {
   constructor(
     private readonly cartRepository: CartRepository,
-    private readonly ordersClient: OrdersClient,
+    private readonly cartCheckoutPublisher: CartCheckoutPublisher,
   ) {}
 
   listCarts() {
@@ -142,7 +143,10 @@ export class CartService {
       throw new BadRequestException('Cart must contain at least one item.');
     }
 
-    const order = await this.ordersClient.createOrder({
+    const now = new Date().toISOString();
+    const checkoutPayload: CheckoutInitiatedPayload = {
+      checkoutId: crypto.randomUUID(),
+      cartId: cart.id,
       customerName: cart.customerName,
       items: cart.items.map((item) => ({
         productId: item.productId,
@@ -150,19 +154,31 @@ export class CartService {
         unitPrice: item.unitPrice,
         quantity: item.quantity,
       })),
-      sourceCartId: cart.id,
-    });
+      requestedAt: now,
+    };
 
+    const previousUpdatedAt = cart.updatedAt;
     cart.status = 'checked_out';
-    cart.updatedAt = new Date().toISOString();
-    cart.checkedOutOrderId = order.id;
+    cart.updatedAt = now;
     this.cartRepository.saveCart(cart);
+
+    try {
+      await this.cartCheckoutPublisher.publishCheckoutInitiated(checkoutPayload);
+    } catch (error) {
+      cart.status = 'open';
+      cart.updatedAt = previousUpdatedAt;
+      this.cartRepository.saveCart(cart);
+      throw error;
+    }
 
     return {
       cartId: cart.id,
-      orderId: order.id,
-      status: cart.status,
-      totalAmount: order.amount,
+      status: 'accepted',
+      checkout: {
+        checkoutId: checkoutPayload.checkoutId,
+        status: 'pending_async_order_creation',
+      },
+      totalAmount: cart.totalAmount,
     };
   }
 

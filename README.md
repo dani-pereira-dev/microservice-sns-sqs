@@ -18,8 +18,10 @@ apps/
     src/
       app.module.ts
       main.ts
+      orders-checkout.consumer.ts
       orders.controller.ts
       orders-events.consumer.ts
+      orders-events.publisher.ts
       orders.module.ts
       orders.repository.ts
       orders.service.ts
@@ -28,6 +30,7 @@ apps/
       app.module.ts
       main.ts
       payments.controller.ts
+      payments-events.consumer.ts
       payments.module.ts
       payments-outbox.publisher.ts
       payments.repository.ts
@@ -43,13 +46,12 @@ apps/
   cart/
     src/
       app.module.ts
+      cart-checkout.publisher.ts
       main.ts
       cart.controller.ts
       cart.module.ts
       cart.repository.ts
       cart.service.ts
-      orders.client.ts
-      products.client.ts
   notification/
     src/
       # legado de referencia, fuera del flujo principal
@@ -211,7 +213,6 @@ Podes sobreescribirlos con:
 - `PAYMENTS_DB_PATH`
 - `PRODUCTS_DB_PATH`
 - `CART_DB_PATH`
-- `ORDERS_BASE_URL`
 
 Si queres, tambien existe fallback a `PORT` cuando levantas un servicio de forma individual.
 
@@ -228,6 +229,10 @@ Variables relevantes:
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_SESSION_TOKEN`
+- `AWS_SNS_CHECKOUT_INITIATED_TOPIC_ARN`
+- `AWS_SQS_ORDERS_CHECKOUT_INITIATED_QUEUE_URL`
+- `AWS_SNS_ORDER_CREATED_TOPIC_ARN`
+- `AWS_SQS_PAYMENTS_ORDER_CREATED_QUEUE_URL`
 - `AWS_SNS_PAYMENT_CONFIRMED_TOPIC_ARN`
 - `AWS_SNS_ORDER_STATUS_TOPIC_ARN`
 - `AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL`
@@ -263,7 +268,6 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 - `GET /payments`
 - `GET /payments/outbox`
 - `GET /payments/:paymentId`
-- `POST /payments/confirm`
 
 `notification-email` no expone endpoints HTTP. Consume eventos desde SQS a traves de una Lambda.
 
@@ -272,17 +276,18 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 1. Crear productos en `products`.
 2. Crear un carrito en `cart`.
 3. Agregar items al carrito usando `product_projections` locales dentro de `cart`.
-4. Ejecutar checkout del carrito; `cart` crea una orden en `orders`.
-5. Confirmar el pago en `payments` usando `orderId`; `payments` consulta a `orders` para tomar el total real.
-6. `payments` publica el evento `payment.confirmed` en SNS.
-7. SNS distribuye ese evento a la cola SQS de `orders`.
-8. `orders` consume el evento, intenta confirmar la orden y publica un nuevo evento de salida:
+4. Ejecutar checkout del carrito; `cart` publica `checkout.initiated` y responde `accepted`.
+5. `orders` consume `checkout.initiated`, crea la orden en estado `pending` y publica `order.created`.
+6. `payments` consume `order.created`, crea el pago confirmado y lo deja en su outbox.
+7. El outbox de `payments` publica `payment.confirmed` en SNS.
+8. SNS distribuye ese evento a la cola SQS de `orders`.
+9. `orders` consume el evento, intenta confirmar la orden y publica un nuevo evento de salida:
    - `order.confirmed` si la orden quedo confirmada
    - `order.confirmation_failed` si la orden no pudo confirmarse por una regla de negocio
-9. SNS distribuye ese resultado a la cola SQS de `notification-email`.
-10. La Lambda `notification-email` consume ese resultado real y envia un email indicando exito o fallo.
+10. SNS distribuye ese resultado a la cola SQS de `notification-email`.
+11. La Lambda `notification-email` consume ese resultado real y envia un email indicando exito o fallo.
 
-La respuesta de `POST /payments/confirm` representa la confirmacion del pago dentro de `payments` y la publicacion del evento, pero la confirmacion final de la orden ocurre despues de forma asincrona en `orders`.
+Como `POST /carts/:cartId/checkout` ahora responde `accepted`, el resultado final se inspecciona despues consultando `GET /orders` o `GET /payments` una vez que los consumers procesan las colas.
 
 `orders` ahora persiste localmente en SQLite. Por defecto usa `data/orders.sqlite`, asi que las ordenes sobreviven a reinicios del servicio.
 `payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.
@@ -298,8 +303,9 @@ Los seeders escriben directo sobre esas bases locales ignoradas por git, asi que
 - Los contratos compartidos viven en `libs/shared/src/contracts`.
 - La mensajeria usa un `MessagingModule` pequeno con publisher SNS y consumer SQS.
 - `products` expone un catalogo HTTP simple.
-- `cart` usa `product_projections` locales para armar el carrito y solo mantiene HTTP hacia `orders` para el checkout.
-- `payments` publica eventos; `orders` consume esos eventos y `notification-email` los procesa desde Lambda.
+- `cart` usa `product_projections` locales y publica `checkout.initiated` para arrancar el flujo.
+- `orders` crea la orden desde eventos y tambien confirma o rechaza la orden cuando recibe `payment.confirmed`.
+- `payments` auto-confirma el pago cuando recibe `order.created`, y publica de forma confiable usando outbox.
 - `orders` usa un repositorio simple con SQLite para persistir `order` y `order_items`.
 - `payments` usa su propio repositorio SQLite separado para persistir pagos confirmados.
 - `payments` tambien usa outbox para garantizar publicacion confiable a SNS.

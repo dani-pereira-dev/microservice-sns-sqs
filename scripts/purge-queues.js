@@ -26,6 +26,12 @@ async function main() {
 
   const region = process.env.AWS_REGION || 'us-east-1';
   const endpoint = process.env.AWS_ENDPOINT || undefined;
+  const ordersCheckoutQueueUrl = getRequiredEnv(
+    'AWS_SQS_ORDERS_CHECKOUT_INITIATED_QUEUE_URL',
+  );
+  const paymentsOrderCreatedQueueUrl = getRequiredEnv(
+    'AWS_SQS_PAYMENTS_ORDER_CREATED_QUEUE_URL',
+  );
   const ordersQueueUrl = getRequiredEnv(
     'AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL',
   );
@@ -38,6 +44,8 @@ async function main() {
     endpoint,
   });
 
+  await purgeQueue(sqsClient, ordersCheckoutQueueUrl);
+  await purgeQueue(sqsClient, paymentsOrderCreatedQueueUrl);
   await purgeQueue(sqsClient, ordersQueueUrl);
   await purgeQueue(sqsClient, notificationQueueUrl);
 }

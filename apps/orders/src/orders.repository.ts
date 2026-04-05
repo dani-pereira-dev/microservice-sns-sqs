@@ -79,6 +79,11 @@ export class OrdersRepository {
       ON order_items(order_id)
     `);
 
+    this.database.exec(`
+      CREATE INDEX IF NOT EXISTS idx_orders_source_cart_id
+      ON orders(source_cart_id)
+    `);
+
     this.logger.log(
       formatOrdersLog(`SQLite persistence enabled at ${databasePath}.`),
     );
@@ -108,6 +113,22 @@ export class OrdersRepository {
         `,
       )
       .get(orderId) as OrderRow | undefined;
+
+    return row ? this.mapRowToOrder(row) : null;
+  }
+
+  findBySourceCartId(sourceCartId: string): Order | null {
+    const row = this.database
+      .prepare(
+        `
+          SELECT id, customer_name, amount, status, created_at, updated_at, source_cart_id, payment_json
+          FROM orders
+          WHERE source_cart_id = ?
+          ORDER BY created_at ASC
+          LIMIT 1
+        `,
+      )
+      .get(sourceCartId) as OrderRow | undefined;
 
     return row ? this.mapRowToOrder(row) : null;
   }

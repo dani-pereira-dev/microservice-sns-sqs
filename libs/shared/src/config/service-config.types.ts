@@ -8,8 +8,12 @@ export interface ServiceMessagingConfig {
   transport: 'sns-sqs';
   region: string;
   endpoint?: string;
+  checkoutInitiatedTopicArn?: string;
+  orderCreatedTopicArn?: string;
   paymentConfirmedTopicArn?: string;
   orderStatusTopicArn?: string;
+  ordersCheckoutInitiatedQueueUrl?: string;
+  paymentsOrderCreatedQueueUrl?: string;
   ordersPaymentConfirmedQueueUrl?: string;
   notificationOrderStatusQueueUrl?: string;
 }
@@ -19,10 +23,6 @@ export interface ServiceDatabaseConfig {
   paymentsDbPath: string;
   productsDbPath: string;
   cartDbPath: string;
-}
-
-export interface ServiceDependenciesConfig {
-  ordersBaseUrl: string;
 }
 
 export interface ServiceNotificationConfig {
@@ -35,6 +35,5 @@ export interface ServiceConfig {
   app: ServiceAppConfig;
   messaging: ServiceMessagingConfig;
   database: ServiceDatabaseConfig;
-  dependencies: ServiceDependenciesConfig;
   notification: ServiceNotificationConfig;
 }

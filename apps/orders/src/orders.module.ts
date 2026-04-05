@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { OrdersCheckoutConsumer } from './orders-checkout.consumer';
 import { OrdersEventsPublisher } from './orders-events.publisher';
 import { OrdersController } from './orders.controller';
 import { OrdersEventsConsumer } from './orders-events.consumer';
@@ -10,6 +11,7 @@ import { OrdersService } from './orders.service';
   providers: [
     OrdersRepository,
     OrdersService,
+    OrdersCheckoutConsumer,
     OrdersEventsConsumer,
     OrdersEventsPublisher,
   ],

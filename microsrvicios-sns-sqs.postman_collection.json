@@ -3,7 +3,7 @@
     "_postman_id": "b4a5490a-0dc9-4f30-9cdb-23a00d0d8e2a",
     "name": "microsrvicios-sns-sqs",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Coleccion base para probar los endpoints HTTP actuales de orders y payments."
+    "description": "Coleccion base para probar los endpoints HTTP actuales del flujo marketplace simple."
   },
   "variable": [
     {
@@ -45,7 +45,7 @@
                 "orders"
               ]
             },
-            "description": "Lista las ordenes en memoria."
+            "description": "Lista las ordenes persistidas en SQLite."
           },
           "response": []
         },
@@ -458,7 +458,7 @@
                 }
               ]
             },
-            "description": "Hace checkout del carrito y crea una orden en orders."
+            "description": "Hace checkout del carrito, publica checkout.initiated y responde accepted mientras orders crea la orden de forma asincrona."
           },
           "response": []
         }
@@ -526,34 +526,6 @@
               ]
             },
             "description": "Lista todos los registros del outbox de payments, incluyendo eventos pending y published."
-          },
-          "response": []
-        },
-        {
-          "name": "POST /payments/confirm",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"idempotencyKey\": \"pay-confirm-001\",\n  \"orderId\": \"REEMPLAZAR_ORDER_ID\",\n  \"paymentMethod\": \"credit_card\"\n}"
-            },
-            "url": {
-              "raw": "{{paymentsBaseUrl}}/payments/confirm",
-              "host": [
-                "{{paymentsBaseUrl}}"
-              ],
-              "path": [
-                "payments",
-                "confirm"
-              ]
-            },
-            "description": "Confirma el pago en payments usando idempotencyKey. Payments consulta orders para tomar el total real de la orden, guarda el evento en un outbox y deja explicito que la confirmacion de la orden sigue de forma asincrona."
           },
           "response": []
         }

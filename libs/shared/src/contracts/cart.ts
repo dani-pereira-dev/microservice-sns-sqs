@@ -30,5 +30,4 @@ export interface Cart {
   totalAmount: number;
   createdAt: string;
   updatedAt: string;
-  checkedOutOrderId?: string;
 }

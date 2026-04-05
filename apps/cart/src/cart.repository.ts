@@ -195,7 +195,7 @@ export class CartRepository {
         cart.status,
         cart.createdAt,
         cart.updatedAt,
-        cart.checkedOutOrderId ?? null,
+        null,
       );
 
     return cart;
@@ -280,7 +280,7 @@ export class CartRepository {
         cart.status,
         cart.createdAt,
         cart.updatedAt,
-        cart.checkedOutOrderId ?? null,
+        null,
         cart.id,
       );
 
@@ -324,7 +324,6 @@ export class CartRepository {
       totalAmount: items.reduce((sum, item) => sum + item.lineTotal, 0),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      checkedOutOrderId: row.checked_out_order_id ?? undefined,
     };
   }
 
