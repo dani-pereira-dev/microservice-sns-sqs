@@ -48,6 +48,7 @@ Debe contener:
 
 - `*.module.ts` del dominio
 - `*.service.ts` con reglas de negocio
+- `*.validators.ts` o `*.guards.ts` con validaciones y precondiciones del dominio
 - tipos o modelos propios del dominio si no son compartidos
 
 No deberia contener:
@@ -119,6 +120,9 @@ apps/orders/src/
   domain/
     orders.module.ts
     orders.service.ts
+    orders-query.service.ts
+    orders-command.service.ts
+    orders.domain.validators.ts
   http/
     orders.controller.ts
   messaging/
@@ -131,7 +135,10 @@ apps/orders/src/
 
 Que hace cada parte:
 
-- `domain/orders.service.ts`: crea ordenes y confirma pagos sobre una orden
+- `domain/orders.service.ts`: fachada liviana para controladores y consumers
+- `domain/orders-query.service.ts`: lecturas de ordenes
+- `domain/orders-command.service.ts`: creacion y confirmacion
+- `domain/orders.domain.validators.ts`: validaciones de input y reglas previas a confirmar
 - `http/orders.controller.ts`: expone `GET /orders`, `GET /orders/:id` y `POST /orders`
 - `messaging/orders-checkout.consumer.ts`: escucha `checkout.initiated`
 - `messaging/orders-events.consumer.ts`: escucha `payment.confirmed`
@@ -151,6 +158,9 @@ apps/payments/src/
   domain/
     payments.module.ts
     payments.service.ts
+    payments-query.service.ts
+    payments-command.service.ts
+    payments.domain.validators.ts
   http/
     payments.controller.ts
   messaging/
@@ -165,7 +175,10 @@ apps/payments/src/
 
 Que hace cada parte:
 
-- `domain/payments.service.ts`: aplica la logica de confirmacion de pago
+- `domain/payments.service.ts`: fachada liviana
+- `domain/payments-query.service.ts`: lecturas de pagos y outbox
+- `domain/payments-command.service.ts`: confirmacion automatica, idempotencia y publicacion logica
+- `domain/payments.domain.validators.ts`: validaciones e invariantes de confirmacion
 - `http/payments.controller.ts`: expone lectura de pagos y outbox
 - `messaging/payments-events.consumer.ts`: escucha `order.created`
 - `messaging/payments-outbox.publisher.ts`: publica eventos pendientes del outbox
@@ -187,6 +200,9 @@ apps/cart/src/
   domain/
     cart.module.ts
     cart.service.ts
+    cart-query.service.ts
+    cart-command.service.ts
+    cart.domain.validators.ts
     cart-product-projection.ts
   http/
     cart.controller.ts
@@ -200,7 +216,10 @@ apps/cart/src/
 
 Que hace cada parte:
 
-- `domain/cart.service.ts`: crea carritos, agrega items y ejecuta checkout
+- `domain/cart.service.ts`: fachada liviana
+- `domain/cart-query.service.ts`: lecturas de carrito y proyecciones
+- `domain/cart-command.service.ts`: mutaciones de carrito y checkout
+- `domain/cart.domain.validators.ts`: validaciones de cantidad, estado del carrito y disponibilidad local
 - `domain/cart-product-projection.ts`: tipo minimo del producto proyectado
 - `http/cart.controller.ts`: expone endpoints de carrito y de `product-projections`
 - `messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
@@ -260,6 +279,7 @@ Que hace cada parte:
 Cuando agregues un archivo nuevo, usa esta regla:
 
 - si decide reglas de negocio: `domain/`
+- si valida invariantes y lanza excepciones del dominio: `domain/*validators.ts`
 - si recibe o responde HTTP: `http/`
 - si consume o publica eventos: `messaging/`
 - si toca SQLite o queries: `persistence/`
@@ -269,6 +289,7 @@ Cuando agregues un archivo nuevo, usa esta regla:
 
 - `main.ts` y `app.module.ts` quedan solos en la raiz
 - `domain` contiene negocio
+- `domain` tambien puede contener validators/guards del dominio
 - `http` contiene controllers
 - `messaging` contiene SNS/SQS
 - `persistence` contiene SQLite y repositorios
