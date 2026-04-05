@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { PaymentConfirmation } from '@shared/contracts/payments';
+import {
+  ORDER_CONFIRMATION_FAILED_EVENT,
+  ORDER_CONFIRMED_EVENT,
+  OrderStatusEvent,
+} from '@shared/contracts/events';
 import { formatNotificationLog } from '@shared/messaging/messaging-log.utils';
 
 @Injectable()
@@ -29,11 +33,8 @@ export class NotificationService {
     );
   }
 
-  async handlePaymentConfirmed(
-    payment: PaymentConfirmation,
-    recipientEmail?: string,
-  ) {
-    const to = recipientEmail?.trim() || this.defaultToEmail;
+  async handleOrderStatus(event: OrderStatusEvent) {
+    const to = this.defaultToEmail;
 
     if (!this.resendApiKey) {
       throw new Error('RESEND_API_KEY is not configured.');
@@ -46,28 +47,59 @@ export class NotificationService {
     }
 
     const resend = new Resend(this.resendApiKey);
+    const { subject, text } = this.buildEmailContent(event);
 
     await resend.emails.send({
       from: this.emailFrom,
       to,
-      subject: `Pago confirmado para la orden ${payment.orderId}`,
-      text: [
-        'Se recibio una confirmacion de pago.',
-        '',
-        `paymentId: ${payment.paymentId}`,
-        `orderId: ${payment.orderId}`,
-        `amount: ${payment.amount}`,
-        `paymentMethod: ${payment.paymentMethod}`,
-        `status: ${payment.status}`,
-        `confirmedAt: ${payment.confirmedAt}`,
-        `idempotencyKey: ${payment.idempotencyKey}`,
-      ].join('\n'),
+      subject,
+      text,
     });
 
     this.logger.log(
       formatNotificationLog(
-        `Email notification sent for payment ${payment.paymentId} to ${to}.`,
+        `Email notification sent for ${event.eventType} and order ${event.payload.orderId} to ${to}.`,
       ),
     );
+  }
+
+  private buildEmailContent(event: OrderStatusEvent) {
+    if (event.eventType === ORDER_CONFIRMED_EVENT) {
+      return {
+        subject: `Orden confirmada: ${event.payload.orderId}`,
+        text: [
+          'La orden fue confirmada correctamente.',
+          '',
+          `orderId: ${event.payload.orderId}`,
+          `customerName: ${event.payload.customerName}`,
+          `amount: ${event.payload.amount}`,
+          `paymentId: ${event.payload.payment.paymentId}`,
+          `paymentMethod: ${event.payload.payment.paymentMethod}`,
+          `confirmedAt: ${event.payload.confirmedAt}`,
+          `idempotencyKey: ${event.payload.payment.idempotencyKey}`,
+          'resultado: exito',
+        ].join('\n'),
+      };
+    }
+
+    if (event.eventType === ORDER_CONFIRMATION_FAILED_EVENT) {
+      return {
+        subject: `Fallo en confirmacion de orden: ${event.payload.orderId}`,
+        text: [
+          'La orden no pudo confirmarse.',
+          '',
+          `orderId: ${event.payload.orderId}`,
+          `paymentId: ${event.payload.payment.paymentId}`,
+          `amount: ${event.payload.payment.amount}`,
+          `paymentMethod: ${event.payload.payment.paymentMethod}`,
+          `failedAt: ${event.payload.failedAt}`,
+          `idempotencyKey: ${event.payload.payment.idempotencyKey}`,
+          `motivo: ${event.payload.reason}`,
+          'resultado: fallo',
+        ].join('\n'),
+      };
+    }
+
+    throw new Error('Unsupported order status event.');
   }
 }

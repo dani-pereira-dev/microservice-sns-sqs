@@ -1,8 +1,9 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
-  PAYMENT_CONFIRMED_EVENT,
-  PaymentConfirmedEvent,
+  ORDER_CONFIRMATION_FAILED_EVENT,
+  ORDER_CONFIRMED_EVENT,
+  OrderStatusEvent,
 } from '@shared/contracts/events';
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
@@ -22,7 +23,7 @@ export class NotificationEventsConsumer implements OnModuleInit {
 
   async onModuleInit() {
     const queueUrl = this.configService.get(
-      'messaging.notificationPaymentConfirmedQueueUrl',
+      'messaging.notificationOrderStatusQueueUrl',
       {
         infer: true,
       },
@@ -30,20 +31,23 @@ export class NotificationEventsConsumer implements OnModuleInit {
 
     if (!queueUrl) {
       this.logger.warn(
-        'AWS_SQS_NOTIFICATION_PAYMENT_CONFIRMED_QUEUE_URL is not configured. Notification consumer disabled.',
+        'AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL is not configured. Notification consumer disabled.',
       );
       return;
     }
 
-    await this.messageConsumer.subscribe<PaymentConfirmedEvent>({
+    await this.messageConsumer.subscribe<OrderStatusEvent>({
       queueUrl,
-      handlerName: 'notification.payment-confirmed',
+      handlerName: 'notification.order-status',
       handleMessage: async (event) => {
-        if (event.eventType !== PAYMENT_CONFIRMED_EVENT) {
+        if (
+          event.eventType !== ORDER_CONFIRMED_EVENT &&
+          event.eventType !== ORDER_CONFIRMATION_FAILED_EVENT
+        ) {
           return;
         }
 
-        await this.notificationService.handlePaymentConfirmed(event.payload);
+        await this.notificationService.handleOrderStatus(event);
       },
     });
   }

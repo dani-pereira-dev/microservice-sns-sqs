@@ -42,3 +42,7 @@ export type OrderConfirmationFailedEvent = DomainEvent<
   typeof ORDER_CONFIRMATION_FAILED_EVENT,
   OrderConfirmationFailedPayload
 >;
+
+export type OrderStatusEvent =
+  | OrderConfirmedEvent
+  | OrderConfirmationFailedEvent;
