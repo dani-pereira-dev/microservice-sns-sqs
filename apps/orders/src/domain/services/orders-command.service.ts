@@ -1,15 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CheckoutInitiatedPayload } from '@shared/contracts/events';
-import { PaymentConfirmation } from '@shared/contracts/payments';
-import { CreateOrderRequest, Order } from '@shared/contracts/orders';
-import { formatOrdersLog } from '@shared/messaging/messaging-log.utils';
-import { OrdersRepository } from '../../persistence/orders.repository';
-import { buildOrder } from '../builders/orders.domain.builders';
+import { Injectable, Logger } from "@nestjs/common";
+import { CheckoutInitiatedPayload } from "@shared/contracts/events";
+import { PaymentConfirmation } from "@shared/contracts/payments";
+import { CreateOrderRequest, Order } from "@shared/contracts/orders";
+import { formatOrdersLog } from "@shared/messaging/messaging-log.utils";
+import { OrdersRepository } from "../../persistence/orders.repository";
+import {
+  buildOrder,
+  buildOrderWithPaymentConfirmation,
+} from "../builders/orders.domain.builders";
 import {
   ensureOrderCanReceivePayment,
   requireExistingOrderForPayment,
   validateCreateOrderInput,
-} from '../validators/orders.domain.validators';
+} from "../validators/orders.domain.validators";
 
 export interface ApplyPaymentConfirmationResult {
   order: Order;
@@ -32,7 +35,9 @@ export class OrdersCommandService {
   }
 
   createOrderFromCheckout(input: CheckoutInitiatedPayload) {
-    const existingOrder = this.ordersRepository.findBySourceCartId(input.cartId);
+    const existingOrder = this.ordersRepository.findBySourceCartId(
+      input.cartId,
+    );
 
     if (existingOrder) {
       this.logger.log(
@@ -60,7 +65,7 @@ export class OrdersCommandService {
     );
     const paymentAction = ensureOrderCanReceivePayment(order, payment);
 
-    if (paymentAction === 'already_processed') {
+    if (paymentAction === "already_processed") {
       this.logger.log(
         formatOrdersLog(
           `Order ${order.id} already confirmed by payment ${payment.paymentId}. Skipping duplicate processing.`,
@@ -74,15 +79,11 @@ export class OrdersCommandService {
     }
 
     const confirmedAt = new Date().toISOString();
-
-    order.status = 'confirmed';
-    order.updatedAt = confirmedAt;
-    order.payment = {
-      paymentId: payment.paymentId,
-      amount: payment.amount,
-      paymentMethod: payment.paymentMethod.trim(),
+    const confirmedOrder = buildOrderWithPaymentConfirmation(
+      order,
+      payment,
       confirmedAt,
-    };
+    );
 
     this.logger.log(
       formatOrdersLog(
@@ -91,7 +92,7 @@ export class OrdersCommandService {
     );
 
     return {
-      order: this.ordersRepository.save(order),
+      order: this.ordersRepository.save(confirmedOrder),
       alreadyProcessed: false,
     };
   }
