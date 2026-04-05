@@ -2,15 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   ORDER_CREATED_EVENT,
-  PAYMENT_CONFIRMED_EVENT,
   OrderCreatedEvent,
-  PaymentConfirmedEvent,
 } from '@shared/contracts/events';
 import { PaymentConfirmation } from '@shared/contracts/payments';
 import { ServiceConfig } from '@shared/config/service-config.types';
 import { PaymentsOutboxPublisher } from '../messaging/payments-outbox.publisher';
 import { PaymentsRepository } from '../persistence/payments.repository';
 import { PaymentsTransactionalRepository } from '../persistence/payments-transactional.repository';
+import {
+  buildPaymentConfirmation,
+  buildPaymentConfirmedEvent,
+} from './payments.domain.builders';
 import {
   CreatePaymentAttemptInput,
   ensureIdempotentRequestMatches,
@@ -54,17 +56,9 @@ export class PaymentsCommandService {
       return existingPayment;
     }
 
-    const paymentConfirmation: PaymentConfirmation = {
-      idempotencyKey: input.idempotencyKey,
-      paymentId: crypto.randomUUID(),
-      orderId: input.orderId,
-      amount: input.amount,
-      paymentMethod: input.paymentMethod,
-      status: 'confirmed',
-      confirmedAt: new Date().toISOString(),
-    };
-
-    const event = this.buildPaymentConfirmedEvent(paymentConfirmation);
+    const paymentConfirmation: PaymentConfirmation =
+      buildPaymentConfirmation(input);
+    const event = buildPaymentConfirmedEvent(paymentConfirmation);
     const topicArn = this.getPaymentConfirmedTopicArn();
 
     this.paymentsTransactionalRepository.createWithOutbox(
@@ -75,18 +69,6 @@ export class PaymentsCommandService {
     void this.paymentsOutboxPublisher.publishPendingEvents();
 
     return paymentConfirmation;
-  }
-
-  private buildPaymentConfirmedEvent(
-    payment: PaymentConfirmation,
-  ): PaymentConfirmedEvent {
-    return {
-      eventId: crypto.randomUUID(),
-      eventType: PAYMENT_CONFIRMED_EVENT,
-      occurredAt: new Date().toISOString(),
-      source: 'payments',
-      payload: payment,
-    };
   }
 
   private getPaymentConfirmedTopicArn() {

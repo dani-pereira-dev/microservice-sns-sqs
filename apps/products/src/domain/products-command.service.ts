@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import {
   CreateProductRequest,
-  Product,
   UpdateProductRequest,
 } from '@shared/contracts/products';
 import { ProductsRepository } from '../persistence/products.repository';
+import {
+  buildProduct,
+  buildUpdatedProduct,
+} from './products.domain.builders';
 import {
   requireExistingProduct,
   validateProductPrice,
@@ -21,14 +24,7 @@ export class ProductsCommandService {
     validateProductPrice(input.price);
 
     const now = new Date().toISOString();
-    const product: Product = {
-      id: crypto.randomUUID(),
-      title: input.title.trim(),
-      price: input.price,
-      active: true,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const product = buildProduct(input, now);
 
     return this.productsRepository.create(product);
   }
@@ -41,13 +37,11 @@ export class ProductsCommandService {
       productId,
     );
 
-    const updatedProduct: Product = {
-      ...existingProduct,
-      title: input.title?.trim() || existingProduct.title,
-      price: input.price ?? existingProduct.price,
-      active: input.active ?? existingProduct.active,
+    const updatedProduct = buildUpdatedProduct({
+      existingProduct,
+      input,
       updatedAt: new Date().toISOString(),
-    };
+    });
 
     return this.productsRepository.save(updatedProduct);
   }

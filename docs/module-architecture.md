@@ -49,6 +49,7 @@ Debe contener:
 - `*.module.ts` del dominio
 - `*.service.ts` con reglas de negocio
 - `*.validators.ts` o `*.guards.ts` con validaciones y precondiciones del dominio
+- `*.builders.ts` cuando el dominio arma entidades, snapshots o payloads repetitivos
 - tipos o modelos propios del dominio si no son compartidos
 
 No deberia contener:
@@ -123,6 +124,7 @@ apps/orders/src/
     orders-query.service.ts
     orders-command.service.ts
     orders.domain.validators.ts
+    orders.domain.builders.ts
   http/
     orders.controller.ts
   messaging/
@@ -139,6 +141,7 @@ Que hace cada parte:
 - `domain/orders-query.service.ts`: lecturas de ordenes
 - `domain/orders-command.service.ts`: creacion y confirmacion
 - `domain/orders.domain.validators.ts`: validaciones de input y reglas previas a confirmar
+- `domain/orders.domain.builders.ts`: construccion de `Order` y `OrderItem`
 - `http/orders.controller.ts`: expone `GET /orders`, `GET /orders/:id` y `POST /orders`
 - `messaging/orders-checkout.consumer.ts`: escucha `checkout.initiated`
 - `messaging/orders-events.consumer.ts`: escucha `payment.confirmed`
@@ -161,6 +164,7 @@ apps/payments/src/
     payments-query.service.ts
     payments-command.service.ts
     payments.domain.validators.ts
+    payments.domain.builders.ts
   http/
     payments.controller.ts
   messaging/
@@ -179,6 +183,7 @@ Que hace cada parte:
 - `domain/payments-query.service.ts`: lecturas de pagos y outbox
 - `domain/payments-command.service.ts`: confirmacion automatica, idempotencia y publicacion logica
 - `domain/payments.domain.validators.ts`: validaciones e invariantes de confirmacion
+- `domain/payments.domain.builders.ts`: construccion de `PaymentConfirmation` y `payment.confirmed`
 - `http/payments.controller.ts`: expone lectura de pagos y outbox
 - `messaging/payments-events.consumer.ts`: escucha `order.created`
 - `messaging/payments-outbox.publisher.ts`: publica eventos pendientes del outbox
@@ -203,6 +208,7 @@ apps/cart/src/
     cart-query.service.ts
     cart-command.service.ts
     cart.domain.validators.ts
+    cart.domain.builders.ts
     cart-product-projection.ts
   http/
     cart.controller.ts
@@ -220,6 +226,7 @@ Que hace cada parte:
 - `domain/cart-query.service.ts`: lecturas de carrito y proyecciones
 - `domain/cart-command.service.ts`: mutaciones de carrito y checkout
 - `domain/cart.domain.validators.ts`: validaciones de cantidad, estado del carrito y disponibilidad local
+- `domain/cart.domain.builders.ts`: construccion de `Cart`, `CartItem` y `checkoutPayload`
 - `domain/cart-product-projection.ts`: tipo minimo del producto proyectado
 - `http/cart.controller.ts`: expone endpoints de carrito y de `product-projections`
 - `messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
@@ -243,6 +250,7 @@ apps/products/src/
     products-query.service.ts
     products-command.service.ts
     products.domain.validators.ts
+    products.domain.builders.ts
   http/
     products.controller.ts
   persistence/
@@ -255,6 +263,7 @@ Que hace cada parte:
 - `domain/products-query.service.ts`: lecturas del catalogo
 - `domain/products-command.service.ts`: altas y actualizaciones
 - `domain/products.domain.validators.ts`: validaciones de titulo, precio y existencia
+- `domain/products.domain.builders.ts`: construccion de `Product` y actualizaciones
 - `http/products.controller.ts`: expone endpoints del catalogo
 - `persistence/products.repository.ts`: persiste `products`
 
@@ -292,6 +301,7 @@ Cuando agregues un archivo nuevo, usa esta regla:
 
 - si decide reglas de negocio: `domain/`
 - si valida invariantes y lanza excepciones del dominio: `domain/*validators.ts`
+- si arma entidades o payloads repetitivos: `domain/*builders.ts`
 - si recibe o responde HTTP: `http/`
 - si consume o publica eventos: `messaging/`
 - si toca SQLite o queries: `persistence/`
@@ -302,6 +312,7 @@ Cuando agregues un archivo nuevo, usa esta regla:
 - `main.ts` y `app.module.ts` quedan solos en la raiz
 - `domain` contiene negocio
 - `domain` tambien puede contener validators/guards del dominio
+- `domain` tambien puede contener builders del dominio
 - `http` contiene controllers
 - `messaging` contiene SNS/SQS
 - `persistence` contiene SQLite y repositorios

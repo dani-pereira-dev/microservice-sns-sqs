@@ -1,14 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CheckoutInitiatedPayload } from '@shared/contracts/events';
 import { PaymentConfirmation } from '@shared/contracts/payments';
-import {
-  CreateOrderItemRequest,
-  CreateOrderRequest,
-  Order,
-  OrderItem,
-} from '@shared/contracts/orders';
+import { CreateOrderRequest, Order } from '@shared/contracts/orders';
 import { formatOrdersLog } from '@shared/messaging/messaging-log.utils';
 import { OrdersRepository } from '../persistence/orders.repository';
+import { buildOrder } from './orders.domain.builders';
 import {
   ensureOrderCanReceivePayment,
   requireExistingOrderForPayment,
@@ -30,17 +26,7 @@ export class OrdersCommandService {
     validateCreateOrderInput(input);
 
     const now = new Date().toISOString();
-    const items = input.items.map((item) => this.mapInputToOrderItem(item));
-    const order: Order = {
-      id: crypto.randomUUID(),
-      customerName: input.customerName.trim(),
-      items,
-      amount: items.reduce((sum, item) => sum + item.lineTotal, 0),
-      status: 'pending',
-      createdAt: now,
-      updatedAt: now,
-      sourceCartId: input.sourceCartId?.trim() || undefined,
-    };
+    const order: Order = buildOrder(input, now);
 
     return this.ordersRepository.create(order);
   }
@@ -107,17 +93,6 @@ export class OrdersCommandService {
     return {
       order: this.ordersRepository.save(order),
       alreadyProcessed: false,
-    };
-  }
-
-  private mapInputToOrderItem(input: CreateOrderItemRequest): OrderItem {
-    return {
-      id: crypto.randomUUID(),
-      productId: input.productId.trim(),
-      productTitleSnapshot: input.productTitleSnapshot.trim(),
-      unitPrice: input.unitPrice,
-      quantity: input.quantity,
-      lineTotal: input.unitPrice * input.quantity,
     };
   }
 }

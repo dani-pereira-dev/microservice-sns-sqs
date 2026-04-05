@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import {
   AddCartItemRequest,
-  Cart,
-  CartItem,
   CreateCartRequest,
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
-import { CheckoutInitiatedPayload } from '@shared/contracts/events';
 import { CartCheckoutPublisher } from '../messaging/cart-checkout.publisher';
 import { CartProductProjectionsRepository } from '../persistence/cart-product-projections.repository';
 import { CartRepository } from '../persistence/cart.repository';
+import {
+  buildCart,
+  buildCartItem,
+  buildCheckoutInitiatedPayload,
+  buildUpdatedCartItem,
+} from './cart.domain.builders';
 import { CartQueryService } from './cart-query.service';
 import {
   ensureCartHasItemsForCheckout,
@@ -34,15 +37,7 @@ export class CartCommandService {
     validateCreateCartInput(input.customerName);
 
     const now = new Date().toISOString();
-    const cart: Cart = {
-      id: crypto.randomUUID(),
-      customerName: input.customerName.trim(),
-      status: 'open',
-      items: [],
-      totalAmount: 0,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const cart = buildCart(input, now);
 
     return this.cartRepository.createCart(cart);
   }
@@ -56,16 +51,11 @@ export class CartCommandService {
       cart.id,
       product.id,
     );
-
-    const quantity = (existingItem?.quantity ?? 0) + input.quantity;
-    const cartItem: CartItem = {
-      id: existingItem?.id ?? crypto.randomUUID(),
-      productId: product.id,
-      productTitleSnapshot: product.title,
-      unitPrice: product.price,
-      quantity,
-      lineTotal: product.price * quantity,
-    };
+    const cartItem = buildCartItem({
+      existingItem,
+      product,
+      quantityToAdd: input.quantity,
+    });
 
     this.cartRepository.upsertCartItem(cart.id, cartItem);
     cart.updatedAt = new Date().toISOString();
@@ -82,12 +72,7 @@ export class CartCommandService {
       this.cartRepository.findItemById(cart.id, itemId),
       itemId,
     );
-
-    const updatedItem: CartItem = {
-      ...existingItem,
-      quantity: input.quantity,
-      lineTotal: existingItem.unitPrice * input.quantity,
-    };
+    const updatedItem = buildUpdatedCartItem(existingItem, input);
 
     this.cartRepository.upsertCartItem(cart.id, updatedItem);
     cart.updatedAt = new Date().toISOString();
@@ -112,18 +97,7 @@ export class CartCommandService {
     ensureCartHasItemsForCheckout(cart);
 
     const now = new Date().toISOString();
-    const checkoutPayload: CheckoutInitiatedPayload = {
-      checkoutId: crypto.randomUUID(),
-      cartId: cart.id,
-      customerName: cart.customerName,
-      items: cart.items.map((item) => ({
-        productId: item.productId,
-        productTitleSnapshot: item.productTitleSnapshot,
-        unitPrice: item.unitPrice,
-        quantity: item.quantity,
-      })),
-      requestedAt: now,
-    };
+    const checkoutPayload = buildCheckoutInitiatedPayload(cart, now);
 
     const previousUpdatedAt = cart.updatedAt;
     cart.status = 'checked_out';
