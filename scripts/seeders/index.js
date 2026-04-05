@@ -1,8 +1,10 @@
 const productsSeeder = require('./products.seeder');
+const cartProductProjectionsSeeder = require('./cart-product-projections.seeder');
 const ordersReadySeeder = require('./orders-ready.seeder');
 
 const seeders = new Map([
   [productsSeeder.entity, productsSeeder],
+  [cartProductProjectionsSeeder.entity, cartProductProjectionsSeeder],
   [ordersReadySeeder.entity, ordersReadySeeder],
 ]);
 

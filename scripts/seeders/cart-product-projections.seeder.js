@@ -3,26 +3,35 @@ const { buildSeedProductRecord } = require('./product-fixtures');
 const resolveDatabasePath = ({
   resolvePath,
   env,
-}) => resolvePath(env.PRODUCTS_DB_PATH, 'data/products.sqlite');
+}) => resolvePath(env.CART_DB_PATH, 'data/cart.sqlite');
 
 const createSchema = ({ database }) => {
   database.exec(`
-    CREATE TABLE IF NOT EXISTS products (
+    CREATE TABLE IF NOT EXISTS product_projections (
       id TEXT PRIMARY KEY,
       title TEXT NOT NULL,
       price REAL NOT NULL,
       active INTEGER NOT NULL,
-      created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
   `);
 };
 
 const clearTable = ({ database }) => {
-  database.exec('DELETE FROM products');
+  database.exec('DELETE FROM product_projections');
 };
 
-const generateRecord = ({ index, now }) => buildSeedProductRecord({ index, now });
+const generateRecord = ({ index, now }) => {
+  const product = buildSeedProductRecord({ index, now });
+
+  return {
+    id: product.id,
+    title: product.title,
+    price: product.price,
+    active: product.active,
+    updatedAt: product.updatedAt,
+  };
+};
 
 const insertRecord = ({ statement, record }) => {
   statement.run(
@@ -30,19 +39,18 @@ const insertRecord = ({ statement, record }) => {
     record.title,
     record.price,
     record.active,
-    record.createdAt,
     record.updatedAt,
   );
 };
 
 module.exports = {
-  entity: 'products',
+  entity: 'cart-product-projections',
   resolveDatabasePath,
   createSchema,
   clearTable,
   insertSql: `
-    INSERT INTO products (id, title, price, active, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO product_projections (id, title, price, active, updated_at)
+    VALUES (?, ?, ?, ?, ?)
   `,
   generateRecord,
   insertRecord,

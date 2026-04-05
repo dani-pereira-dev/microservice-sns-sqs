@@ -5,6 +5,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cart, CartItem, CartStatus } from '@shared/contracts/cart';
 import { ServiceConfig } from '@shared/config/service-config.types';
+import { CartProductProjection } from './cart-product-projection';
 
 interface CartRow {
   id: string;
@@ -23,6 +24,14 @@ interface CartItemRow {
   unit_price: number;
   quantity: number;
   line_total: number;
+}
+
+interface ProductProjectionRow {
+  id: string;
+  title: string;
+  price: number;
+  active: number;
+  updated_at: string;
 }
 
 @Injectable()
@@ -72,6 +81,16 @@ export class CartRepository {
     this.database.exec(`
       CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id
       ON cart_items(cart_id)
+    `);
+
+    this.database.exec(`
+      CREATE TABLE IF NOT EXISTS product_projections (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        price REAL NOT NULL,
+        active INTEGER NOT NULL,
+        updated_at TEXT NOT NULL
+      )
     `);
 
     this.logger.log(`SQLite persistence enabled at ${databasePath}.`);
@@ -131,6 +150,34 @@ export class CartRepository {
       .get(cartId, itemId) as CartItemRow | undefined;
 
     return row ? this.mapRowToCartItem(row) : null;
+  }
+
+  listProductProjections(): CartProductProjection[] {
+    const rows = this.database
+      .prepare(
+        `
+          SELECT id, title, price, active, updated_at
+          FROM product_projections
+          ORDER BY id ASC
+        `,
+      )
+      .all() as ProductProjectionRow[];
+
+    return rows.map((row) => this.mapRowToProductProjection(row));
+  }
+
+  findProductProjectionById(productId: string): CartProductProjection | null {
+    const row = this.database
+      .prepare(
+        `
+          SELECT id, title, price, active, updated_at
+          FROM product_projections
+          WHERE id = ?
+        `,
+      )
+      .get(productId) as ProductProjectionRow | undefined;
+
+    return row ? this.mapRowToProductProjection(row) : null;
   }
 
   createCart(cart: Cart): Cart {
@@ -240,6 +287,32 @@ export class CartRepository {
     return cart;
   }
 
+  upsertProductProjection(
+    product: CartProductProjection,
+  ): CartProductProjection {
+    this.database
+      .prepare(
+        `
+          INSERT INTO product_projections (id, title, price, active, updated_at)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            title = excluded.title,
+            price = excluded.price,
+            active = excluded.active,
+            updated_at = excluded.updated_at
+        `,
+      )
+      .run(
+        product.id,
+        product.title,
+        product.price,
+        product.active ? 1 : 0,
+        product.updatedAt,
+      );
+
+    return product;
+  }
+
   private mapRowToCart(row: CartRow): Cart {
     const items = this.listItems(row.id);
 
@@ -278,6 +351,18 @@ export class CartRepository {
       unitPrice: row.unit_price,
       quantity: row.quantity,
       lineTotal: row.line_total,
+    };
+  }
+
+  private mapRowToProductProjection(
+    row: ProductProjectionRow,
+  ): CartProductProjection {
+    return {
+      id: row.id,
+      title: row.title,
+      price: row.price,
+      active: row.active === 1,
+      updatedAt: row.updated_at,
     };
   }
 }

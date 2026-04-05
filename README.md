@@ -107,6 +107,22 @@ Generar datos de prueba:
 npm run seed:products
 ```
 
+Poblar la proyeccion local minima de productos dentro de la DB de `cart`:
+
+```bash
+npm run seed:cart-product-projections
+```
+
+Ese seeder crea registros en `product_projections` dentro de `data/cart.sqlite` con solo:
+
+- `id`
+- `title`
+- `price`
+- `active`
+- `updated_at`
+
+Los ids del seeder de `products` y de `cart-product-projections` son deterministas para que ambas bases queden alineadas cuando quieras avanzar con la sincronizacion.
+
 Crear una orden de prueba lista para confirmar:
 
 ```bash
