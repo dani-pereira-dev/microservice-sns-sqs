@@ -1,6 +1,10 @@
+import { createNotificationConfigurationError } from './notification.domain.errors';
+
 export const requireNotificationResendApiKey = (resendApiKey?: string) => {
   if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY is not configured.');
+    throw createNotificationConfigurationError(
+      'RESEND_API_KEY is not configured.',
+    );
   }
 
   return resendApiKey;
@@ -8,7 +12,7 @@ export const requireNotificationResendApiKey = (resendApiKey?: string) => {
 
 export const requireNotificationRecipient = (recipient?: string) => {
   if (!recipient) {
-    throw new Error(
+    throw createNotificationConfigurationError(
       'NOTIFICATION_DEFAULT_TO_EMAIL is not configured and no recipientEmail was provided.',
     );
   }

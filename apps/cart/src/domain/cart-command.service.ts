@@ -13,6 +13,7 @@ import {
   buildCheckoutInitiatedPayload,
   buildUpdatedCartItem,
 } from './cart.domain.builders';
+import { rollbackCartAfterCheckoutPublishError } from './cart.domain.error-handlers';
 import { CartQueryService } from './cart-query.service';
 import {
   ensureCartHasItemsForCheckout,
@@ -107,9 +108,9 @@ export class CartCommandService {
     try {
       await this.cartCheckoutPublisher.publishCheckoutInitiated(checkoutPayload);
     } catch (error) {
-      cart.status = 'open';
-      cart.updatedAt = previousUpdatedAt;
-      this.cartRepository.saveCart(cart);
+      this.cartRepository.saveCart(
+        rollbackCartAfterCheckoutPublishError(cart, previousUpdatedAt),
+      );
       throw error;
     }
 

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { MESSAGE_PUBLISHER } from '@shared/messaging/messaging.constants';
 import { MessagePublisher } from '@shared/messaging/messaging.interfaces';
+import { handlePaymentsOutboxPublishError } from './payments-outbox.error-handlers';
 import { PaymentsOutboxRepository } from '../persistence/payments-outbox.repository';
 
 @Injectable()
@@ -61,18 +62,12 @@ export class PaymentsOutboxPublisher implements OnModuleInit, OnModuleDestroy {
 
           this.paymentsOutboxRepository.markPublished(pendingEvent.eventId);
         } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
-
-          this.paymentsOutboxRepository.markFailed(
-            pendingEvent.eventId,
-            errorMessage,
-          );
-
-          this.logger.error(
-            `Failed to publish outbox event ${pendingEvent.eventId}.`,
-            error instanceof Error ? error.stack : errorMessage,
-          );
+          handlePaymentsOutboxPublishError({
+            error,
+            eventId: pendingEvent.eventId,
+            logger: this.logger,
+            paymentsOutboxRepository: this.paymentsOutboxRepository,
+          });
         }
       }
     } finally {

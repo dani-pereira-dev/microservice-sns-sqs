@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   PAYMENT_CONFIRMED_EVENT,
@@ -15,6 +8,7 @@ import { ServiceConfig } from '@shared/config/service-config.types';
 import { MESSAGE_CONSUMER } from '@shared/messaging/messaging.constants';
 import { MessageConsumer } from '@shared/messaging/messaging.interfaces';
 import { OrdersEventsPublisher } from './orders-events.publisher';
+import { resolveOrderConfirmationFailure } from './orders-events.error-handlers';
 import { OrdersService } from '../domain/orders.service';
 
 @Injectable()
@@ -65,20 +59,16 @@ export class OrdersEventsConsumer implements OnModuleInit {
             event.payload,
           );
         } catch (error) {
-          if (
-            error instanceof BadRequestException ||
-            error instanceof NotFoundException
-          ) {
-            const reason =
-              error.message || 'Order confirmation failed for business reasons.';
+          const failure = resolveOrderConfirmationFailure(error);
 
+          if (failure.handled) {
             this.logger.warn(
-              `Order confirmation failed for ${event.payload.orderId}: ${reason}`,
+              `Order confirmation failed for ${event.payload.orderId}: ${failure.reason}`,
             );
 
             await this.ordersEventsPublisher.publishOrderConfirmationFailed(
               event.payload,
-              reason,
+              failure.reason,
             );
             return;
           }
