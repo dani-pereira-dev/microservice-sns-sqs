@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { CartDatabase } from './cart-database';
-import { CartProductProjection } from '../domain/cart-product-projection';
-import { ProductProjectionRow } from './cart.persistence.types';
+import { CartDatabase } from '../../shared/persistence/cart-database';
+import { ProductProjection } from '../domain/product-projection.model';
+import { ProductProjectionRow } from './product-projection.persistence.types';
 
 @Injectable()
-export class CartProductProjectionsRepository {
+export class ProductProjectionsRepository {
   constructor(private readonly cartDatabase: CartDatabase) {}
 
-  list(): CartProductProjection[] {
+  list(): ProductProjection[] {
     const rows = this.database
       .prepare(
         `
@@ -21,7 +21,7 @@ export class CartProductProjectionsRepository {
     return rows.map((row) => this.mapRowToProductProjection(row));
   }
 
-  findById(productId: string): CartProductProjection | null {
+  findById(productId: string): ProductProjection | null {
     const row = this.database
       .prepare(
         `
@@ -35,7 +35,7 @@ export class CartProductProjectionsRepository {
     return row ? this.mapRowToProductProjection(row) : null;
   }
 
-  upsert(product: CartProductProjection): CartProductProjection {
+  upsert(product: ProductProjection): ProductProjection {
     this.database
       .prepare(
         `
@@ -65,7 +65,7 @@ export class CartProductProjectionsRepository {
 
   private mapRowToProductProjection(
     row: ProductProjectionRow,
-  ): CartProductProjection {
+  ): ProductProjection {
     return {
       id: row.id,
       title: row.title,

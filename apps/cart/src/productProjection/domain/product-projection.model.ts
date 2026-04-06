@@ -1,4 +1,4 @@
-export interface CartProductProjection {
+export interface ProductProjection {
   id: string;
   title: string;
   price: number;

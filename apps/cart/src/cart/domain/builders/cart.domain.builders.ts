@@ -5,7 +5,7 @@ import {
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
 import { CheckoutInitiatedPayload } from '@shared/contracts/events';
-import { CartProductProjection } from '../cart-product-projection';
+import { ProductProjection } from '../../../productProjection/domain/product-projection.model';
 
 export const buildCart = (
   input: CreateCartRequest,
@@ -26,7 +26,7 @@ export const buildCartItem = ({
   quantityToAdd,
 }: {
   existingItem?: CartItem | null;
-  product: CartProductProjection;
+  product: ProductProjection;
   quantityToAdd: number;
 }): CartItem => {
   const quantity = (existingItem?.quantity ?? 0) + quantityToAdd;

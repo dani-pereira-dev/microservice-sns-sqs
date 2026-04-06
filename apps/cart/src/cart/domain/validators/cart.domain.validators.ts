@@ -1,6 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Cart } from '@shared/contracts/cart';
-import { CartProductProjection } from '../cart-product-projection';
 
 export const validateCreateCartInput = (customerName: string | undefined) => {
   if (!customerName?.trim()) {
@@ -38,36 +37,13 @@ export const ensureExistingCart = (cart: Cart | null, cartId: string) => {
   return cart;
 };
 
-export const ensureExistingCartItem = <TItem>(item: TItem | null, itemId: string) => {
+export const ensureExistingCartItem = <TItem>(
+  item: TItem | null,
+  itemId: string,
+) => {
   if (!item) {
     throw new NotFoundException(`Cart item ${itemId} not found.`);
   }
 
   return item;
-};
-
-export const ensureExistingProductProjection = (
-  productProjection: CartProductProjection | null,
-  productId: string,
-) => {
-  if (!productProjection) {
-    throw new NotFoundException(
-      `Product projection ${productId} not found in cart.`,
-    );
-  }
-
-  return productProjection;
-};
-
-export const ensureProductProjectionIsActive = (
-  productProjection: CartProductProjection,
-  productId: string,
-) => {
-  if (!productProjection.active) {
-    throw new BadRequestException(
-      `Product projection ${productId} is not active in cart.`,
-    );
-  }
-
-  return productProjection;
 };

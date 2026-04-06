@@ -1,18 +1,18 @@
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { CartDomainLogger } from '../domain/logging/cart-domain.logger';
+import { formatCartLog } from '@shared/logging/log-format.utils';
 
 @Injectable()
 export class CartDatabase {
+  private readonly logger = new Logger(CartDatabase.name);
   readonly connection: Database.Database;
 
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
-    private readonly cartDomainLogger: CartDomainLogger,
   ) {
     const configuredPath = this.configService.get('database.cartDbPath', {
       infer: true,
@@ -65,8 +65,8 @@ export class CartDatabase {
       )
     `);
 
-    this.cartDomainLogger.log(
-      `SQLite persistence enabled at ${databasePath}.`,
+    this.logger.log(
+      formatCartLog(`SQLite persistence enabled at ${databasePath}.`),
     );
   }
 }

@@ -18,14 +18,6 @@ export class CartService {
     return this.cartQueryService.listCarts();
   }
 
-  listProductProjections() {
-    return this.cartQueryService.listProductProjections();
-  }
-
-  getProductProjectionById(productId: string) {
-    return this.cartQueryService.getProductProjectionById(productId);
-  }
-
   getCartById(cartId: string) {
     return this.cartQueryService.getCartById(cartId);
   }

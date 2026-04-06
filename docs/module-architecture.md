@@ -212,7 +212,7 @@ Que hace cada parte:
 
 ### `cart`
 
-`cart` es el duenio del carrito y de la proyeccion local de productos que usa para operar sin llamadas sincronas a `products`.
+El microservicio combina **dos subdominios** en la misma app (misma base SQLite): **carrito** (`src/cart/`) y **proyeccion de productos** (`src/productProjection/`). En **`src/shared/`** va lo compartido a nivel de MS: persistencia (`CartDatabase`) y logging con tag `[CART]` (`CartDomainLogger` + `CartLoggingModule`).
 
 Estructura:
 
@@ -220,43 +220,62 @@ Estructura:
 apps/cart/src/
   app.module.ts
   main.ts
-  domain/
-    cart.module.ts
-    cart-product-projection.ts
-    services/
-      cart.service.ts
-      cart-query.service.ts
-      cart-command.service.ts
-    validators/
-      cart.domain.validators.ts
-    builders/
-      cart.domain.builders.ts
-    error-handlers/
-      cart.domain.error-handlers.ts
-  http/
-    cart.controller.ts
-  messaging/
-    cart-checkout.publisher.ts
-  persistence/
-    cart-database.ts
-    cart.repository.ts
-    cart-product-projections.repository.ts
+  shared/
+    persistence/
+      cart-database.module.ts
+      cart-database.ts
+    logging/
+      cart-domain.logger.ts
+      cart-logging.module.ts
+  cart/
+    domain/
+      cart.module.ts
+      services/
+        cart.service.ts
+        cart-query.service.ts
+        cart-command.service.ts
+      validators/
+        cart.domain.validators.ts
+      builders/
+        cart.domain.builders.ts
+      error-handlers/
+        cart.domain.error-handlers.ts
+    http/
+      cart.controller.ts
+    messaging/
+      cart-checkout.publisher.ts
+    persistence/
+      cart.repository.ts
+      cart.persistence.types.ts
+  productProjection/
+    domain/
+      product-projection.module.ts
+      product-projection.model.ts
+      services/
+        product-projection.service.ts
+        product-projection-query.service.ts
+      validators/
+        product-projection.domain.validators.ts
+    http/
+      product-projections.controller.ts
+    persistence/
+      product-projections.repository.ts
+      product-projection.persistence.types.ts
 ```
 
 Que hace cada parte:
 
-- `domain/services/cart.service.ts`: fachada liviana
-- `domain/services/cart-query.service.ts`: lecturas de carrito y proyecciones
-- `domain/services/cart-command.service.ts`: mutaciones de carrito y checkout
-- `domain/validators/cart.domain.validators.ts`: validaciones de cantidad, estado del carrito y disponibilidad local
-- `domain/builders/cart.domain.builders.ts`: construccion de `Cart`, `CartItem` y `checkoutPayload`
-- `domain/error-handlers/cart.domain.error-handlers.ts`: rollback ante fallo al publicar checkout
-- `domain/cart-product-projection.ts`: tipo minimo del producto proyectado
-- `http/cart.controller.ts`: expone endpoints de carrito y de `product-projections`
-- `messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
-- `persistence/cart-database.ts`: inicializa SQLite y schema de `carts`, `cart_items` y `product_projections`
-- `persistence/cart.repository.ts`: maneja `Cart` y `CartItem`
-- `persistence/cart-product-projections.repository.ts`: maneja la tabla local `product_projections`
+- `shared/persistence/cart-database.ts`: una sola DB SQLite, tablas `carts`, `cart_items`, `product_projections`
+- `shared/persistence/cart-database.module.ts`: exporta `CartDatabase` para ambos subdominios
+- `shared/logging/cart-domain.logger.ts` y `cart-logging.module.ts`: logger con prefijo del microservicio; importa `CartLoggingModule` quien lo necesite (`cart`, `productProjection`, etc.)
+- `cart/domain/cart.module.ts`: importa `CartDatabaseModule`, `CartLoggingModule` y `ProductProjectionModule`; registra el carrito
+- `cart/domain/services/cart-query.service.ts`: solo lecturas de carrito
+- `cart/domain/services/cart-command.service.ts`: mutaciones y checkout (usa `ProductProjectionsRepository` del otro modulo)
+- `productProjection/domain/product-projection-query.service.ts`: lecturas del read model
+- `productProjection/domain/services/product-projection.service.ts`: fachada HTTP de proyecciones
+- `productProjection/domain/validators/product-projection.domain.validators.ts`: existencia y `active` de proyeccion
+- `http/cart.controller.ts` y `http/product-projections.controller.ts`: rutas `carts` y `carts/product-projections`
+- `cart/messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
 
 ### `products`
 

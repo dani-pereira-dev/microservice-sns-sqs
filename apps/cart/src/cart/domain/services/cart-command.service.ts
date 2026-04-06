@@ -4,8 +4,12 @@ import {
   CreateCartRequest,
   UpdateCartItemRequest,
 } from '@shared/contracts/cart';
+import { ProductProjectionsRepository } from '../../../productProjection/persistence/product-projections.repository';
+import {
+  ensureExistingProductProjection,
+  ensureProductProjectionIsActive,
+} from '../../../productProjection/domain/validators/product-projection.domain.validators';
 import { CartCheckoutPublisher } from '../../messaging/cart-checkout.publisher';
-import { CartProductProjectionsRepository } from '../../persistence/cart-product-projections.repository';
 import { CartRepository } from '../../persistence/cart.repository';
 import {
   buildCart,
@@ -19,8 +23,6 @@ import {
   ensureCartHasItemsForCheckout,
   ensureCartIsOpen,
   ensureExistingCartItem,
-  ensureExistingProductProjection,
-  ensureProductProjectionIsActive,
   validateCartItemQuantity,
   validateCreateCartInput,
 } from '../validators/cart.domain.validators';
@@ -30,7 +32,7 @@ export class CartCommandService {
   constructor(
     private readonly cartRepository: CartRepository,
     private readonly cartQueryService: CartQueryService,
-    private readonly cartProductProjectionsRepository: CartProductProjectionsRepository,
+    private readonly productProjectionsRepository: ProductProjectionsRepository,
     private readonly cartCheckoutPublisher: CartCheckoutPublisher,
   ) {}
 
@@ -84,7 +86,10 @@ export class CartCommandService {
 
   removeItem(cartId: string, itemId: string) {
     const cart = this.requireOpenCart(cartId);
-    ensureExistingCartItem(this.cartRepository.findItemById(cart.id, itemId), itemId);
+    ensureExistingCartItem(
+      this.cartRepository.findItemById(cart.id, itemId),
+      itemId,
+    );
 
     this.cartRepository.deleteCartItem(cart.id, itemId);
     cart.updatedAt = new Date().toISOString();
@@ -131,7 +136,7 @@ export class CartCommandService {
 
   private requireActiveProductProjection(productId: string) {
     const productProjection = ensureExistingProductProjection(
-      this.cartProductProjectionsRepository.findById(productId),
+      this.productProjectionsRepository.findById(productId),
       productId,
     );
 

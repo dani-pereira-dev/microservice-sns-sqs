@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cart, CartItem } from '@shared/contracts/cart';
-import { CartDatabase } from './cart-database';
+import { CartDatabase } from '../../shared/persistence/cart-database';
 import { CartItemRow, CartRow } from './cart.persistence.types';
 
 @Injectable()
