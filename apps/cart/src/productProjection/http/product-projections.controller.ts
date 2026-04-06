@@ -1,7 +1,7 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ProductProjectionService } from '../domain/services/product-projection.service';
 
-@Controller('carts/product-projections')
+@Controller('product-projections')
 export class ProductProjectionsController {
   constructor(
     private readonly productProjectionService: ProductProjectionService,

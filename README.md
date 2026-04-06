@@ -258,8 +258,8 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 - `POST /products`
 - `PATCH /products/:productId`
 - `GET /carts`
-- `GET /carts/product-projections`
-- `GET /carts/product-projections/:productId`
+- `GET /product-projections`
+- `GET /product-projections/:productId`
 - `GET /carts/:cartId`
 - `POST /carts`
 - `POST /carts/:cartId/items`

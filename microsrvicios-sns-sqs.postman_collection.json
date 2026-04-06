@@ -234,36 +234,34 @@
           "response": []
         },
         {
-          "name": "GET /carts/product-projections",
+          "name": "GET /product-projections",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{cartBaseUrl}}/carts/product-projections",
+              "raw": "{{cartBaseUrl}}/product-projections",
               "host": [
                 "{{cartBaseUrl}}"
               ],
               "path": [
-                "carts",
                 "product-projections"
               ]
             },
-            "description": "Lista las product projections locales del ms de cart."
+            "description": "Lista las product projections locales del ms de cart (ruta separada de /carts para evitar conflicto con :cartId)."
           },
           "response": []
         },
         {
-          "name": "GET /carts/product-projections/:productId",
+          "name": "GET /product-projections/:productId",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{cartBaseUrl}}/carts/product-projections/:productId",
+              "raw": "{{cartBaseUrl}}/product-projections/:productId",
               "host": [
                 "{{cartBaseUrl}}"
               ],
               "path": [
-                "carts",
                 "product-projections",
                 ":productId"
               ],

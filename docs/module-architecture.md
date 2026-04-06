@@ -269,12 +269,13 @@ Que hace cada parte:
 - `shared/persistence/cart-database.module.ts`: exporta `CartDatabase` para ambos subdominios
 - `shared/logging/cart-domain.logger.ts` y `cart-logging.module.ts`: logger con prefijo del microservicio; importa `CartLoggingModule` quien lo necesite (`cart`, `productProjection`, etc.)
 - `cart/domain/cart.module.ts`: importa `CartDatabaseModule`, `CartLoggingModule` y `ProductProjectionModule`; registra el carrito
+- `cart/http/cart.controller.ts`: solo rutas bajo `carts`
+- `productProjection/http/product-projections.controller.ts`: `GET /product-projections` y `GET /product-projections/:productId` (prefijo propio para no chocar con `GET /carts/:cartId`)
 - `cart/domain/services/cart-query.service.ts`: solo lecturas de carrito
 - `cart/domain/services/cart-command.service.ts`: mutaciones y checkout (usa `ProductProjectionsRepository` del otro modulo)
 - `productProjection/domain/product-projection-query.service.ts`: lecturas del read model
-- `productProjection/domain/services/product-projection.service.ts`: fachada HTTP de proyecciones
+- `productProjection/domain/services/product-projection.service.ts`: fachada de lectura del read model (`ProductProjectionsController`)
 - `productProjection/domain/validators/product-projection.domain.validators.ts`: existencia y `active` de proyeccion
-- `http/cart.controller.ts` y `http/product-projections.controller.ts`: rutas `carts` y `carts/product-projections`
 - `cart/messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
 
 ### `products`
