@@ -38,6 +38,7 @@ export function createServiceConfig(
       orderCreatedTopicArn: process.env.AWS_SNS_ORDER_CREATED_TOPIC_ARN,
       paymentConfirmedTopicArn: process.env.AWS_SNS_PAYMENT_CONFIRMED_TOPIC_ARN,
       orderStatusTopicArn: process.env.AWS_SNS_ORDER_STATUS_TOPIC_ARN,
+      productEventsTopicArn: process.env.AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN,
       ordersCheckoutInitiatedQueueUrl:
         process.env.AWS_SQS_ORDERS_CHECKOUT_INITIATED_QUEUE_URL,
       paymentsOrderCreatedQueueUrl:
@@ -46,6 +47,8 @@ export function createServiceConfig(
         process.env.AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL,
       notificationOrderStatusQueueUrl:
         process.env.AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL,
+      cartProductEventsQueueUrl:
+        process.env.AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL,
     },
     database: {
       ordersDbPath: process.env.ORDERS_DB_PATH ?? 'data/orders.sqlite',

@@ -238,6 +238,8 @@ Variables relevantes:
 - `AWS_SNS_ORDER_STATUS_TOPIC_ARN`
 - `AWS_SQS_ORDERS_PAYMENT_CONFIRMED_QUEUE_URL`
 - `AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL`
+- `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` (publicacion desde `products` al crear o actualizar un producto)
+- `AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL` (cola SQS suscrita a ese topic; la consume `cart` para actualizar `product_projections`)
 - `RESEND_API_KEY`
 - `NOTIFICATION_EMAIL_FROM`
 - `NOTIFICATION_DEFAULT_TO_EMAIL`
@@ -274,19 +276,20 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 
 ## Flujo actual
 
-1. Crear productos en `products`.
-2. Crear un carrito en `cart`.
-3. Agregar items al carrito usando `product_projections` locales dentro de `cart`.
-4. Ejecutar checkout del carrito; `cart` publica `checkout.initiated` y responde `accepted`.
-5. `orders` consume `checkout.initiated`, crea la orden en estado `pending` y publica `order.created`.
-6. `payments` consume `order.created`, crea el pago confirmado y lo deja en su outbox.
-7. El outbox de `payments` publica `payment.confirmed` en SNS.
-8. SNS distribuye ese evento a la cola SQS de `orders`.
-9. `orders` consume el evento, intenta confirmar la orden y publica un nuevo evento de salida:
+1. Crear o modificar productos en `products`; el servicio persiste en SQLite y publica `product.created` / `product.updated` en `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` cuando esa variable esta configurada.
+2. `cart` expone el modulo `sync`, que hace polling de `AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL` y mantiene la tabla `product_projections` con upserts (incluido `active: false` si lo envias en un update). Sin topic/cola configurados, los CRUD de productos siguen funcionando y el consumer del cart queda deshabilitado con un warning en logs.
+3. Crear un carrito en `cart`.
+4. Agregar items al carrito usando `product_projections` locales dentro de `cart`.
+5. Ejecutar checkout del carrito; `cart` publica `checkout.initiated` y responde `accepted`.
+6. `orders` consume `checkout.initiated`, crea la orden en estado `pending` y publica `order.created`.
+7. `payments` consume `order.created`, crea el pago confirmado y lo deja en su outbox.
+8. El outbox de `payments` publica `payment.confirmed` en SNS.
+9. SNS distribuye ese evento a la cola SQS de `orders`.
+10. `orders` consume el evento, intenta confirmar la orden y publica un nuevo evento de salida:
    - `order.confirmed` si la orden quedo confirmada
    - `order.confirmation_failed` si la orden no pudo confirmarse por una regla de negocio
-10. SNS distribuye ese resultado a la cola SQS de `notification-email`.
-11. La Lambda `notification-email` consume ese resultado real y envia un email indicando exito o fallo.
+11. SNS distribuye ese resultado a la cola SQS de `notification-email`.
+12. La Lambda `notification-email` consume ese resultado real y envia un email indicando exito o fallo.
 
 Como `POST /carts/:cartId/checkout` ahora responde `accepted`, el resultado final se inspecciona despues consultando `GET /orders` o `GET /payments` una vez que los consumers procesan las colas.
 
@@ -303,8 +306,8 @@ Los seeders escriben directo sobre esas bases locales ignoradas por git, asi que
 - La capa compartida define `bootstrap`, configuracion y contratos de mensajeria.
 - Los contratos compartidos viven en `libs/shared/src/contracts`.
 - La mensajeria usa un `MessagingModule` pequeno con publisher SNS y consumer SQS.
-- `products` expone un catalogo HTTP simple.
-- `cart` usa `product_projections` locales y publica `checkout.initiated` para arrancar el flujo.
+- `products` expone un catalogo HTTP simple y publica `product.created` / `product.updated` en SNS cuando `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` esta definido.
+- `cart` mantiene `product_projections` con el modulo `sync` (consumer SQS) y usa esas proyecciones al armar items; ademas publica `checkout.initiated` para arrancar el flujo de orden.
 - `orders` crea la orden desde eventos y tambien confirma o rechaza la orden cuando recibe `payment.confirmed`.
 - `payments` auto-confirma el pago cuando recibe `order.created`, y publica de forma confiable usando outbox.
 - `orders` usa un repositorio simple con SQLite para persistir `order` y `order_items`.

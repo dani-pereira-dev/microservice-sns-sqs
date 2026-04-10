@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ProductsController } from '../http/products.controller';
+import { ProductsEventsPublisher } from '../messaging/products-events.publisher';
 import { ProductsRepository } from '../persistence/products.repository';
 import { ProductsDomainLogger } from './logging/products-domain.logger';
 import { ProductsCommandService } from './services/products-command.service';
@@ -14,6 +15,7 @@ import { ProductsService } from './services/products.service';
     ProductsQueryService,
     ProductsCommandService,
     ProductsService,
+    ProductsEventsPublisher,
   ],
 })
 export class ProductsModule {}

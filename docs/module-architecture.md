@@ -212,7 +212,7 @@ Que hace cada parte:
 
 ### `cart`
 
-El microservicio combina **dos subdominios** en la misma app (misma base SQLite): **carrito** (`src/cart/`) y **proyeccion de productos** (`src/productProjection/`). En **`src/shared/`** va lo compartido a nivel de MS: persistencia (`CartDatabase`) y logging con tag `[CART]` (`CartDomainLogger` + `CartLoggingModule`).
+El microservicio combina **tres areas** en la misma app (misma base SQLite): **carrito** (`src/cart/`), **proyeccion de productos** (`src/productProjection/`) y **sincronizacion de esa proyeccion** (`src/sync/`). En **`src/shared/`** va lo compartido a nivel de MS: persistencia (`CartDatabase`) y logging con tag `[CART]` (`CartDomainLogger` + `CartLoggingModule`).
 
 Estructura:
 
@@ -261,6 +261,15 @@ apps/cart/src/
     persistence/
       product-projections.repository.ts
       product-projection.persistence.types.ts
+  sync/
+    sync.module.ts
+    domain/
+      services/
+        product-projection-sync.service.ts
+      validators/
+        product-projection-sync.domain.validators.ts
+    messaging/
+      product-events.consumer.ts
 ```
 
 Que hace cada parte:
@@ -277,6 +286,12 @@ Que hace cada parte:
 - `productProjection/domain/services/product-projection.service.ts`: fachada de lectura del read model (`ProductProjectionsController`)
 - `productProjection/domain/validators/product-projection.domain.validators.ts`: existencia y `active` de proyeccion
 - `cart/messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
+- `sync/sync.module.ts`: importa `ProductProjectionModule` y `CartLoggingModule`; registra el consumer de productos
+- `sync/domain/services/product-projection-sync.service.ts`: aplica `product.created` / `product.updated` al repositorio de proyecciones (upsert)
+- `sync/domain/validators/product-projection-sync.domain.validators.ts`: type guards del cuerpo del mensaje (`isNonNullObjectValue`, `isProductLifecycleEventEnvelope`, `isProductUpsertLifecycleEventType`, `isProductSnapshot`)
+- `sync/messaging/product-events.consumer.ts`: suscripcion SQS a `AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL` (deshabilitada si falta la variable)
+
+`app.module.ts` del cart importa `MessagingModule`, `CartModule` y `SyncModule`.
 
 ### `products`
 
@@ -300,6 +315,10 @@ apps/products/src/
       products.domain.builders.ts
   http/
     products.controller.ts
+  messaging/
+    products-events.publisher.ts
+    builders/
+      products-events.messaging.builders.ts
   persistence/
     products.repository.ts
 ```
@@ -308,11 +327,15 @@ Que hace cada parte:
 
 - `domain/services/products.service.ts`: fachada liviana
 - `domain/services/products-query.service.ts`: lecturas del catalogo
-- `domain/services/products-command.service.ts`: altas y actualizaciones
+- `domain/services/products-command.service.ts`: altas y actualizaciones; tras persistir dispara publicacion de eventos de catalogo
 - `domain/validators/products.domain.validators.ts`: validaciones de titulo, precio y existencia
 - `domain/builders/products.domain.builders.ts`: construccion de `Product` y actualizaciones
 - `http/products.controller.ts`: expone endpoints del catalogo
+- `messaging/products-events.publisher.ts`: publica en SNS `product.created` y `product.updated` si `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` esta configurado
+- `messaging/builders/products-events.messaging.builders.ts`: construye los `DomainEvent` de ciclo de vida del producto
 - `persistence/products.repository.ts`: persiste `products`
+
+`app.module.ts` registra `MessagingModule.register({ serviceName: 'products' })` ademas de `ProductsModule`.
 
 ### `notification` legado
 

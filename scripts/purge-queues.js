@@ -48,6 +48,16 @@ async function main() {
   await purgeQueue(sqsClient, paymentsOrderCreatedQueueUrl);
   await purgeQueue(sqsClient, ordersQueueUrl);
   await purgeQueue(sqsClient, notificationQueueUrl);
+
+  const cartProductEventsQueueUrl =
+    process.env.AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL;
+  if (cartProductEventsQueueUrl) {
+    await purgeQueue(sqsClient, cartProductEventsQueueUrl);
+  } else {
+    console.log(
+      'skip purge: AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL is not set',
+    );
+  }
 }
 
 main().catch((error) => {

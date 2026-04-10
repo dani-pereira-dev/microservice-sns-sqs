@@ -2,6 +2,16 @@
 
 ## Cuando se crea cada cosa
 
+### Catalogo y proyeccion en el carrito
+
+La **fuente de verdad** del catalogo es el microservicio `products` (`data/products.sqlite`). La tabla `product_projections` en `cart` es un **read model** que se alinea por mensajeria:
+
+1. `products` persiste un alta o cambio y publica **`product.created`** o **`product.updated`** en el topic SNS configurado (`AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN`), si esa variable existe.
+2. SNS entrega a la cola SQS del carrito (`AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL`).
+3. El modulo **`sync`** de `cart` consume esos mensajes y hace **upsert** en `product_projections` (incluido `active: false` cuando llega en el payload de un update).
+
+Sin topic/cola configurados, el consumer no arranca y las proyecciones solo cambian si las cargas por seed o proceso manual; los endpoints de `products` siguen funcionando.
+
 ### Carrito
 
 El carrito se crea cuando el cliente llama:
@@ -91,7 +101,7 @@ flowchart TD
   CheckoutEvent["checkout.initiated\ncheckoutId\ncartId\nitems[]"]
   OrderCreatedEvent["order.created\norderId\namount\nitems[]"]
 
-  Product -->|"sincroniza proyeccion"| ProductProjection
+  Product -->|"product.created / product.updated (SNS-SQS)"| ProductProjection
   ProductProjection -->|"snapshot al agregar"| CartItem
   Cart --> CartItem
   Cart -->|"publish"| CheckoutEvent

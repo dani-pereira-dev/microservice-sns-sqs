@@ -3,6 +3,7 @@ import {
   CreateProductRequest,
   UpdateProductRequest,
 } from '@shared/contracts/products';
+import { ProductsEventsPublisher } from '../../messaging/products-events.publisher';
 import { ProductsRepository } from '../../persistence/products.repository';
 import {
   buildProduct,
@@ -17,19 +18,24 @@ import {
 
 @Injectable()
 export class ProductsCommandService {
-  constructor(private readonly productsRepository: ProductsRepository) {}
+  constructor(
+    private readonly productsRepository: ProductsRepository,
+    private readonly productsEventsPublisher: ProductsEventsPublisher,
+  ) {}
 
-  createProduct(input: CreateProductRequest) {
+  async createProduct(input: CreateProductRequest) {
     validateProductTitle(input.title);
     validateProductPrice(input.price);
 
     const now = new Date().toISOString();
     const product = buildProduct(input, now);
 
-    return this.productsRepository.create(product);
+    const saved = this.productsRepository.create(product);
+    await this.productsEventsPublisher.publishProductCreated(saved);
+    return saved;
   }
 
-  updateProduct(productId: string, input: UpdateProductRequest) {
+  async updateProduct(productId: string, input: UpdateProductRequest) {
     validateUpdateProductInput(input);
 
     const existingProduct = requireExistingProduct(
@@ -43,6 +49,8 @@ export class ProductsCommandService {
       updatedAt: new Date().toISOString(),
     });
 
-    return this.productsRepository.save(updatedProduct);
+    const saved = this.productsRepository.save(updatedProduct);
+    await this.productsEventsPublisher.publishProductUpdated(saved);
+    return saved;
   }
 }

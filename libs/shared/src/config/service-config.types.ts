@@ -12,10 +12,12 @@ export interface ServiceMessagingConfig {
   orderCreatedTopicArn?: string;
   paymentConfirmedTopicArn?: string;
   orderStatusTopicArn?: string;
+  productEventsTopicArn?: string;
   ordersCheckoutInitiatedQueueUrl?: string;
   paymentsOrderCreatedQueueUrl?: string;
   ordersPaymentConfirmedQueueUrl?: string;
   notificationOrderStatusQueueUrl?: string;
+  cartProductEventsQueueUrl?: string;
 }
 
 export interface ServiceDatabaseConfig {
