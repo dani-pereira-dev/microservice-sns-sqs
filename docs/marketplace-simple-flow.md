@@ -4,9 +4,9 @@
 
 ### Catalogo y proyeccion en el carrito
 
-La **fuente de verdad** del catalogo es el microservicio `products` (`data/products.sqlite`). La tabla `product_projections` en `cart` es un **read model** que se alinea por mensajeria:
+La **fuente de verdad** del catalogo es el microservicio `products`, que persiste eventos append-only en Postgres en AWS (`product_events` vía `PRODUCTS_DATABASE_URL`). La tabla `product_projections` en `cart` es un **read model** que se alinea por mensajeria:
 
-1. `products` persiste un alta o cambio y publica **`product.created`** o **`product.updated`** en el topic SNS configurado (`AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN`), si esa variable existe.
+1. `products` registra un evento y publica **`product.created`** o **`product.updated`** en el topic SNS configurado (`AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN`), si esa variable existe.
 2. SNS entrega a la cola SQS del carrito (`AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL`).
 3. El modulo **`sync`** de `cart` consume esos mensajes y hace **upsert** en `product_projections` (incluido `active: false` cuando llega en el payload de un update).
 

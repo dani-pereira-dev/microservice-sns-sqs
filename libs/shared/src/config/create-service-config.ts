@@ -53,8 +53,12 @@ export function createServiceConfig(
     database: {
       ordersDbPath: process.env.ORDERS_DB_PATH ?? 'data/orders.sqlite',
       paymentsDbPath: process.env.PAYMENTS_DB_PATH ?? 'data/payments.sqlite',
-      productsDbPath: process.env.PRODUCTS_DB_PATH ?? 'data/products.sqlite',
       cartDbPath: process.env.CART_DB_PATH ?? 'data/cart.sqlite',
+      productsDatabaseUrl: process.env.PRODUCTS_DATABASE_URL,
+      productsTypeormSynchronize:
+        process.env.PRODUCTS_TYPEORM_SYNCHRONIZE === 'true',
+      productsDatabaseSslRejectUnauthorized:
+        process.env.PRODUCTS_DATABASE_SSL_REJECT_UNAUTHORIZED === 'true',
     },
     notification: {
       resendApiKey: process.env.RESEND_API_KEY,

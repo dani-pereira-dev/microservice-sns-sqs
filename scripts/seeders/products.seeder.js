@@ -1,49 +1,54 @@
+const { randomUUID } = require('node:crypto');
+const { Client } = require('pg');
+const { buildProductsPgClientConfig } = require('../lib/products-pg-connection');
 const { buildSeedProductRecord } = require('./product-fixtures');
 
-const resolveDatabasePath = ({
-  resolvePath,
-  env,
-}) => resolvePath(env.PRODUCTS_DB_PATH, 'data/products.sqlite');
+const PRODUCT_CREATED_EVENT = 'product.created';
 
-const createSchema = ({ database }) => {
-  database.exec(`
-    CREATE TABLE IF NOT EXISTS products (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL,
-      price REAL NOT NULL,
-      active INTEGER NOT NULL,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `);
-};
+/**
+ * Siembra eventos `product.created` en Postgres en AWS (tabla product_events).
+ * Requiere PRODUCTS_DATABASE_URL. TLS: `scripts/lib/products-pg-connection.js`.
+ */
+async function runPostgresSeed({ count, clear, env }) {
+  const client = new Client(buildProductsPgClientConfig(env));
+  await client.connect();
 
-const clearTable = ({ database }) => {
-  database.exec('DELETE FROM products');
-};
+  try {
+    if (clear) {
+      await client.query('DELETE FROM product_events');
+    }
 
-const generateRecord = ({ index, now }) => buildSeedProductRecord({ index, now });
+    const now = new Date().toISOString();
+    const insertSql = `
+      INSERT INTO product_events (id, aggregate_id, type, payload, version, created_at)
+      VALUES ($1, $2, $3, $4::jsonb, $5, now())
+    `;
 
-const insertRecord = ({ statement, record }) => {
-  statement.run(
-    record.id,
-    record.title,
-    record.price,
-    record.active,
-    record.createdAt,
-    record.updatedAt,
-  );
-};
+    for (let index = 0; index < count; index += 1) {
+      const fixture = buildSeedProductRecord({ index, now });
+      const payload = {
+        id: fixture.id,
+        title: fixture.title,
+        price: fixture.price,
+        active: Boolean(fixture.active),
+        createdAt: fixture.createdAt,
+        updatedAt: fixture.updatedAt,
+      };
+
+      await client.query(insertSql, [
+        randomUUID(),
+        payload.id,
+        PRODUCT_CREATED_EVENT,
+        JSON.stringify(payload),
+        1,
+      ]);
+    }
+  } finally {
+    await client.end();
+  }
+}
 
 module.exports = {
   entity: 'products',
-  resolveDatabasePath,
-  createSchema,
-  clearTable,
-  insertSql: `
-    INSERT INTO products (id, title, price, active, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `,
-  generateRecord,
-  insertRecord,
+  runPostgresSeed,
 };

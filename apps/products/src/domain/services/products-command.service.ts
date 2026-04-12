@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
+  PRODUCT_CREATED_EVENT,
+  PRODUCT_UPDATED_EVENT,
+} from '@shared/contracts/events';
+import {
   CreateProductRequest,
   UpdateProductRequest,
 } from '@shared/contracts/products';
 import { ProductsEventsPublisher } from '../../messaging/products-events.publisher';
-import { ProductsRepository } from '../../persistence/products.repository';
+import { ProductEventsRepository } from '../../persistence/product-events.repository';
 import {
   buildProduct,
   buildUpdatedProduct,
@@ -19,7 +23,7 @@ import {
 @Injectable()
 export class ProductsCommandService {
   constructor(
-    private readonly productsRepository: ProductsRepository,
+    private readonly productEventsRepository: ProductEventsRepository,
     private readonly productsEventsPublisher: ProductsEventsPublisher,
   ) {}
 
@@ -30,16 +34,24 @@ export class ProductsCommandService {
     const now = new Date().toISOString();
     const product = buildProduct(input, now);
 
-    const saved = this.productsRepository.create(product);
-    await this.productsEventsPublisher.publishProductCreated(saved);
-    return saved;
+    const version = await this.productEventsRepository.getNextVersion(
+      product.id,
+    );
+    await this.productEventsRepository.append({
+      aggregateId: product.id,
+      type: PRODUCT_CREATED_EVENT,
+      payload: product,
+      version,
+    });
+    await this.productsEventsPublisher.publishProductCreated(product);
+    return product;
   }
 
   async updateProduct(productId: string, input: UpdateProductRequest) {
     validateUpdateProductInput(input);
 
     const existingProduct = requireExistingProduct(
-      this.productsRepository.findById(productId),
+      await this.productEventsRepository.findProductById(productId),
       productId,
     );
 
@@ -49,8 +61,16 @@ export class ProductsCommandService {
       updatedAt: new Date().toISOString(),
     });
 
-    const saved = this.productsRepository.save(updatedProduct);
-    await this.productsEventsPublisher.publishProductUpdated(saved);
-    return saved;
+    const version = await this.productEventsRepository.getNextVersion(
+      productId,
+    );
+    await this.productEventsRepository.append({
+      aggregateId: productId,
+      type: PRODUCT_UPDATED_EVENT,
+      payload: updatedProduct,
+      version,
+    });
+    await this.productsEventsPublisher.publishProductUpdated(updatedProduct);
+    return updatedProduct;
   }
 }

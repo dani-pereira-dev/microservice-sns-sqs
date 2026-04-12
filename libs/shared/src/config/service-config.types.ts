@@ -23,8 +23,16 @@ export interface ServiceMessagingConfig {
 export interface ServiceDatabaseConfig {
   ordersDbPath: string;
   paymentsDbPath: string;
-  productsDbPath: string;
   cartDbPath: string;
+  /** URL postgres del event store de products (instancia en AWS). */
+  productsDatabaseUrl?: string;
+  /** Si true, TypeORM sincroniza el esquema (solo desarrollo). */
+  productsTypeormSynchronize: boolean;
+  /**
+   * Si true, TLS exige cadena de certificados confiable para Node (producción con CA de RDS).
+   * Si false (por defecto), `ssl.rejectUnauthorized` es false: evita el error típico desde laptop contra Postgres en AWS.
+   */
+  productsDatabaseSslRejectUnauthorized: boolean;
 }
 
 export interface ServiceNotificationConfig {

@@ -39,10 +39,14 @@ apps/
     src/
       app.module.ts
       main.ts
-      products.controller.ts
-      products.module.ts
-      products.repository.ts
-      products.service.ts
+      domain/
+      http/
+      messaging/
+      persistence/
+        entities/
+          product-event.entity.ts
+        product-events.repository.ts
+        products-database.module.ts
   cart/
     src/
       app.module.ts
@@ -98,13 +102,13 @@ npm run start:dev:products
 npm run start:dev:cart
 ```
 
-Resetear las bases SQLite locales:
+Resetear las bases SQLite locales (`orders`, `payments`, `cart`; `products` usa Postgres en AWS):
 
 ```bash
 npm run db:reset
 ```
 
-Generar datos de prueba:
+Generar datos de prueba del catalogo (requiere `PRODUCTS_DATABASE_URL`; inserta filas en `product_events`):
 
 ```bash
 npm run seed:products
@@ -194,7 +198,6 @@ npm run remove:notification:lambda
 
 Si necesitas comparar con el enfoque anterior, el microservicio Nest de `notification` sigue en `apps/notification` como referencia, pero ya no forma parte del flujo principal.
 
-El script `start:dev` primero cierra instancias previas de `orders` y `payments` y despues los vuelve a levantar.
 El script `start:dev` primero cierra instancias previas de `orders`, `payments`, `products` y `cart`, y despues los vuelve a levantar.
 
 Cada servicio usa un puerto por defecto:
@@ -212,8 +215,10 @@ Podes sobreescribirlos con:
 - `CART_PORT`
 - `ORDERS_DB_PATH`
 - `PAYMENTS_DB_PATH`
-- `PRODUCTS_DB_PATH`
 - `CART_DB_PATH`
+- `PRODUCTS_DATABASE_URL` (Postgres en AWS: event store de `products`)
+- `PRODUCTS_TYPEORM_SYNCHRONIZE` (`true` solo en dev para crear la tabla; en producción usar migraciones o SQL en `scripts/sql/001-product-events.sql`)
+- `PRODUCTS_DATABASE_SSL_REJECT_UNAUTHORIZED` (`false` por defecto: evita error de cadena de certificados contra RDS desde Node sin CA extra; `true` en prod si montás la CA de AWS)
 
 Si queres, tambien existe fallback a `PORT` cuando levantas un servicio de forma individual.
 
@@ -240,6 +245,7 @@ Variables relevantes:
 - `AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL`
 - `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` (publicacion desde `products` al crear o actualizar un producto)
 - `AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL` (cola SQS suscrita a ese topic; la consume `cart` para actualizar `product_projections`)
+- `PRODUCTS_DATABASE_URL` / `PRODUCTS_TYPEORM_SYNCHRONIZE` (ver `.env.example`)
 - `RESEND_API_KEY`
 - `NOTIFICATION_EMAIL_FROM`
 - `NOTIFICATION_DEFAULT_TO_EMAIL`
@@ -276,7 +282,7 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 
 ## Flujo actual
 
-1. Crear o modificar productos en `products`; el servicio persiste en SQLite y publica `product.created` / `product.updated` en `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` cuando esa variable esta configurada.
+1. Crear o modificar productos en `products`; el servicio persiste eventos en Postgres en AWS (`product_events`) y publica `product.created` / `product.updated` en `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` cuando esa variable esta configurada.
 2. `cart` expone el modulo `sync`, que hace polling de `AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL` y mantiene la tabla `product_projections` con upserts (incluido `active: false` si lo envias en un update). Sin topic/cola configurados, los CRUD de productos siguen funcionando y el consumer del cart queda deshabilitado con un warning en logs.
 3. Crear un carrito en `cart`.
 4. Agregar items al carrito usando `product_projections` locales dentro de `cart`.
@@ -295,7 +301,7 @@ Como `POST /carts/:cartId/checkout` ahora responde `accepted`, el resultado fina
 
 `orders` ahora persiste localmente en SQLite. Por defecto usa `data/orders.sqlite`, asi que las ordenes sobreviven a reinicios del servicio.
 `payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.
-`products` persiste localmente en `data/products.sqlite`.
+`products` persiste el event store en Postgres en AWS (`PRODUCTS_DATABASE_URL`).
 `cart` persiste localmente en `data/cart.sqlite`.
 Los seeders escriben directo sobre esas bases locales ignoradas por git, asi que no agregan archivos de datos al repo.
 

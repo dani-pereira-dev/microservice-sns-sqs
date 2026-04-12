@@ -54,7 +54,7 @@ const validateOptions = ({ entity, count }) => {
   }
 };
 
-const main = () => {
+const main = async () => {
   loadLocalEnvironment();
 
   const options = parseArgs(process.argv.slice(2));
@@ -66,6 +66,18 @@ const main = () => {
     throw new Error(
       `Unknown entity "${options.entity}". Available entities: ${listSeeders().join(', ')}`,
     );
+  }
+
+  if (typeof seeder.runPostgresSeed === 'function') {
+    await seeder.runPostgresSeed({
+      count: options.count,
+      clear: options.clear,
+      env: process.env,
+    });
+    console.log(
+      `Seeded ${options.count} ${options.entity} rows into Postgres on AWS (product_events)${options.clear ? ' (table cleared first)' : ''}.`,
+    );
+    return;
   }
 
   const databasePath = seeder.resolveDatabasePath({
@@ -111,9 +123,7 @@ const main = () => {
   );
 };
 
-try {
-  main();
-} catch (error) {
+main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
-}
+});

@@ -1,18 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { ProductsRepository } from '../../persistence/products.repository';
+import { ProductEventsRepository } from '../../persistence/product-events.repository';
 import { requireExistingProduct } from '../validators/products.domain.validators';
 
+/**
+ * Lecturas provisionales desde el stream en Postgres (instancia en AWS).
+ * Siguiente paso: read model en otra base (p. ej. DynamoDB) sin tocar el event store.
+ */
 @Injectable()
 export class ProductsQueryService {
-  constructor(private readonly productsRepository: ProductsRepository) {}
+  constructor(
+    private readonly productEventsRepository: ProductEventsRepository,
+  ) {}
 
   listProducts() {
-    return this.productsRepository.list();
+    return this.productEventsRepository.listProducts();
   }
 
-  getProductById(productId: string) {
+  async getProductById(productId: string) {
     return requireExistingProduct(
-      this.productsRepository.findById(productId),
+      await this.productEventsRepository.findProductById(productId),
       productId,
     );
   }

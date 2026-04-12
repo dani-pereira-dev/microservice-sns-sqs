@@ -320,22 +320,27 @@ apps/products/src/
     builders/
       products-events.messaging.builders.ts
   persistence/
-    products.repository.ts
+    entities/
+      product-event.entity.ts
+    product-events.repository.ts
+    products-database.module.ts
 ```
 
 Que hace cada parte:
 
 - `domain/services/products.service.ts`: fachada liviana
-- `domain/services/products-query.service.ts`: lecturas del catalogo
-- `domain/services/products-command.service.ts`: altas y actualizaciones; tras persistir dispara publicacion de eventos de catalogo
+- `domain/services/products-query.service.ts`: lecturas del catalogo (último snapshot por agregado desde `product_events`)
+- `domain/services/products-command.service.ts`: altas y actualizaciones; persiste eventos y dispara publicacion de eventos de catalogo
 - `domain/validators/products.domain.validators.ts`: validaciones de titulo, precio y existencia
 - `domain/builders/products.domain.builders.ts`: construccion de `Product` y actualizaciones
 - `http/products.controller.ts`: expone endpoints del catalogo
 - `messaging/products-events.publisher.ts`: publica en SNS `product.created` y `product.updated` si `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` esta configurado
 - `messaging/builders/products-events.messaging.builders.ts`: construye los `DomainEvent` de ciclo de vida del producto
-- `persistence/products.repository.ts`: persiste `products`
+- `persistence/entities/product-event.entity.ts`: fila de event sourcing (`product_events`)
+- `persistence/product-events.repository.ts`: append y lecturas derivadas del stream
+- `persistence/products-database.module.ts`: `TypeOrmModule.forRootAsync` hacia Postgres en AWS
 
-`app.module.ts` registra `MessagingModule.register({ serviceName: 'products' })` ademas de `ProductsModule`.
+`app.module.ts` registra `ProductsDatabaseModule`, `MessagingModule.register({ serviceName: 'products' })` y `ProductsModule`.
 
 ### `notification` legado
 
