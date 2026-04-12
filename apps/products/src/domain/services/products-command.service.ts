@@ -37,13 +37,14 @@ export class ProductsCommandService {
     const version = await this.productEventsRepository.getNextVersion(
       product.id,
     );
-    await this.productEventsRepository.append({
+    const createdEvent = await this.productEventsRepository.append({
       aggregateId: product.id,
       type: PRODUCT_CREATED_EVENT,
       payload: product,
       version,
     });
     await this.productsEventsPublisher.publishProductCreated(product);
+    await this.productEventsRepository.markPublished(createdEvent.id);
     return product;
   }
 
@@ -64,13 +65,14 @@ export class ProductsCommandService {
     const version = await this.productEventsRepository.getNextVersion(
       productId,
     );
-    await this.productEventsRepository.append({
+    const updatedEvent = await this.productEventsRepository.append({
       aggregateId: productId,
       type: PRODUCT_UPDATED_EVENT,
       payload: updatedProduct,
       version,
     });
     await this.productsEventsPublisher.publishProductUpdated(updatedProduct);
+    await this.productEventsRepository.markPublished(updatedEvent.id);
     return updatedProduct;
   }
 }

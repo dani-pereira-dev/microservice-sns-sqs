@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsController } from '../http/products.controller';
+import { ProductsOutboxRelayService } from '../messaging/products-outbox-relay.service';
 import { ProductsEventsPublisher } from '../messaging/products-events.publisher';
 import { ProductEvent } from '../persistence/entities/product-event.entity';
 import { ProductEventsRepository } from '../persistence/product-events.repository';
@@ -19,6 +20,7 @@ import { ProductsService } from './services/products.service';
     ProductsCommandService,
     ProductsService,
     ProductsEventsPublisher,
+    ProductsOutboxRelayService,
   ],
 })
 export class ProductsModule {}

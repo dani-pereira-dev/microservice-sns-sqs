@@ -27,4 +27,8 @@ export class ProductEvent {
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
+
+  /** Null hasta publicar en SNS (outbox); seteado tras envío exitoso. */
+  @Column({ name: 'published_at', type: 'timestamptz', nullable: true })
+  publishedAt?: Date | null;
 }

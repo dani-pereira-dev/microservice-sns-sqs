@@ -33,6 +33,8 @@ export interface ServiceDatabaseConfig {
    * Si false (por defecto), `ssl.rejectUnauthorized` es false: evita el error típico desde laptop contra Postgres en AWS.
    */
   productsDatabaseSslRejectUnauthorized: boolean;
+  /** Intervalo del relay outbox de products (ms). Solo lo usa el microservicio `products`. */
+  productsOutboxPollMs: number;
 }
 
 export interface ServiceNotificationConfig {

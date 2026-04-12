@@ -8,8 +8,13 @@ CREATE TABLE IF NOT EXISTS product_events (
   payload JSONB NOT NULL,
   version INTEGER NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  published_at TIMESTAMPTZ NULL,
   CONSTRAINT uq_product_events_aggregate_version UNIQUE (aggregate_id, version)
 );
 
 CREATE INDEX IF NOT EXISTS idx_product_events_aggregate_created
   ON product_events (aggregate_id, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_product_events_outbox_pending
+  ON product_events (created_at)
+  WHERE published_at IS NULL;

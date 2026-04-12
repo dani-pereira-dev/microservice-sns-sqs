@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from '@shared/contracts/products';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { ProductEvent } from './entities/product-event.entity';
 
 @Injectable()
@@ -35,6 +35,22 @@ export class ProductEventsRepository {
       version: params.version,
     });
     return this.events.save(row);
+  }
+
+  async markPublished(
+    eventId: string,
+    publishedAt: Date = new Date(),
+  ): Promise<void> {
+    await this.events.update({ id: eventId }, { publishedAt });
+  }
+
+  /** Eventos pendientes de publicar (outbox), más antiguos primero. */
+  async findPendingOutbox(limit: number): Promise<ProductEvent[]> {
+    return this.events.find({
+      where: { publishedAt: IsNull() },
+      order: { createdAt: 'ASC' },
+      take: limit,
+    });
   }
 
   /**

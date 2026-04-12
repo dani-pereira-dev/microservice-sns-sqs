@@ -14,6 +14,17 @@ function readPort(value: string | undefined, fallback: number) {
   return Number.isInteger(port) && port > 0 ? port : fallback;
 }
 
+function readPositiveIntMs(value: string | undefined, fallback: number) {
+  if (!value) {
+    return fallback;
+  }
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 500) {
+    return fallback;
+  }
+  return Math.min(n, 900_000);
+}
+
 export function createServiceConfig(
   serviceName: string,
   defaultPort: number,
@@ -59,6 +70,10 @@ export function createServiceConfig(
         process.env.PRODUCTS_TYPEORM_SYNCHRONIZE === 'true',
       productsDatabaseSslRejectUnauthorized:
         process.env.PRODUCTS_DATABASE_SSL_REJECT_UNAUTHORIZED === 'true',
+      productsOutboxPollMs: readPositiveIntMs(
+        process.env.PRODUCTS_OUTBOX_POLL_MS,
+        5000,
+      ),
     },
     notification: {
       resendApiKey: process.env.RESEND_API_KEY,
