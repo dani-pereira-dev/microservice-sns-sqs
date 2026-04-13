@@ -7,7 +7,6 @@ import {
   CreateProductRequest,
   UpdateProductRequest,
 } from '@shared/contracts/products';
-import { ProductsEventsPublisher } from '../../messaging/products-events.publisher';
 import { ProductEventsRepository } from '../../persistence/product-events.repository';
 import {
   buildProduct,
@@ -20,11 +19,14 @@ import {
   validateUpdateProductInput,
 } from '../validators/products.domain.validators';
 
+/**
+ * Solo persiste en el event store (`published_at` null). La publicación a SNS la hace
+ * `ProductsOutboxRelayService` por polling.
+ */
 @Injectable()
 export class ProductsCommandService {
   constructor(
     private readonly productEventsRepository: ProductEventsRepository,
-    private readonly productsEventsPublisher: ProductsEventsPublisher,
   ) {}
 
   async createProduct(input: CreateProductRequest) {
@@ -37,14 +39,12 @@ export class ProductsCommandService {
     const version = await this.productEventsRepository.getNextVersion(
       product.id,
     );
-    const createdEvent = await this.productEventsRepository.append({
+    await this.productEventsRepository.append({
       aggregateId: product.id,
       type: PRODUCT_CREATED_EVENT,
       payload: product,
       version,
     });
-    await this.productsEventsPublisher.publishProductCreated(product);
-    await this.productEventsRepository.markPublished(createdEvent.id);
     return product;
   }
 
@@ -65,14 +65,12 @@ export class ProductsCommandService {
     const version = await this.productEventsRepository.getNextVersion(
       productId,
     );
-    const updatedEvent = await this.productEventsRepository.append({
+    await this.productEventsRepository.append({
       aggregateId: productId,
       type: PRODUCT_UPDATED_EVENT,
       payload: updatedProduct,
       version,
     });
-    await this.productsEventsPublisher.publishProductUpdated(updatedProduct);
-    await this.productEventsRepository.markPublished(updatedEvent.id);
     return updatedProduct;
   }
 }

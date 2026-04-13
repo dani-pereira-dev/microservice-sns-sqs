@@ -20,8 +20,8 @@ async function runPostgresSeed({ count, clear, env }) {
 
     const now = new Date().toISOString();
     const insertSql = `
-      INSERT INTO product_events (id, aggregate_id, type, payload, version, created_at)
-      VALUES ($1, $2, $3, $4::jsonb, $5, now())
+      INSERT INTO product_events (id, aggregate_id, type, payload, version, created_at, published_at)
+      VALUES ($1, $2, $3, $4::jsonb, $5, now(), now())
     `;
 
     for (let index = 0; index < count; index += 1) {
