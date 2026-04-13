@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { Product } from '@shared/contracts/products';
-import { ProductProjection } from '../../../productProjection/domain/product-projection.model';
-import { ProductProjectionsRepository } from '../../../productProjection/persistence/product-projections.repository';
-import { CartDomainLogger } from '../../../shared/logging/cart-domain.logger';
+import { Injectable } from "@nestjs/common";
+import { Product } from "@shared/contracts/products";
+import { ProductProjection } from "../../../productProjection/domain/product-projection.model";
+import { ProductProjectionsRepository } from "../../../productProjection/persistence/product-projections.repository";
+import { CartDomainLogger } from "../../../shared/logging/cart-domain.logger";
 import {
   isNonNullObjectValue,
   isProductLifecycleEventEnvelope,
   isProductSnapshot,
   isProductUpsertLifecycleEventType,
-} from '@shared/product-events-sync/product-lifecycle-message.validators';
+} from "@shared/product-events-sync/product-lifecycle-message.validators";
 
 @Injectable()
 export class ProductProjectionSyncService {
@@ -20,14 +20,14 @@ export class ProductProjectionSyncService {
   applyLifecycleEvent(untypedMessageBody: unknown): void {
     if (!isNonNullObjectValue(untypedMessageBody)) {
       this.cartDomainLogger.warn(
-        'Ignoring product lifecycle message with non-object body.',
+        "Ignoring product lifecycle message with non-object body.",
       );
       return;
     }
 
     if (!isProductLifecycleEventEnvelope(untypedMessageBody)) {
       this.cartDomainLogger.warn(
-        'Ignoring product lifecycle message missing eventType or payload.',
+        "Ignoring product lifecycle message missing eventType or payload.",
       );
       return;
     }
