@@ -145,13 +145,13 @@ order-ready-to-confirm-1
 O usar el seeder generico:
 
 ```bash
-npm run seed -- --entity products --count 5000
+npm run seed -- --entity products --count 1000
 ```
 
 Por defecto el seeder limpia la tabla antes de insertar. Si queres agregar registros sin borrar los existentes:
 
 ```bash
-npm run seed -- --entity products --count 5000 --append
+npm run seed -- --entity products --count 1000 --append
 ```
 
 Purgar las colas SQS del flujo:
