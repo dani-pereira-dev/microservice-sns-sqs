@@ -1,8 +1,8 @@
 import {
   PRODUCT_CREATED_EVENT,
   PRODUCT_UPDATED_EVENT,
-} from '@shared/contracts/events';
-import { Product } from '@shared/contracts/products';
+} from '../contracts/events';
+import { Product } from '../contracts/products';
 
 export interface ProductLifecycleEventEnvelope {
   eventType: string;
@@ -11,7 +11,8 @@ export interface ProductLifecycleEventEnvelope {
 
 export const isNonNullObjectValue = (
   unknownValue: unknown,
-): unknownValue is object => unknownValue != null && typeof unknownValue === 'object';
+): unknownValue is object =>
+  unknownValue != null && typeof unknownValue === 'object';
 
 export const isProductLifecycleEventEnvelope = (
   candidateObject: object,
@@ -29,6 +30,7 @@ export const isProductUpsertLifecycleEventType = (
 ): eventType is typeof PRODUCT_CREATED_EVENT | typeof PRODUCT_UPDATED_EVENT =>
   eventType === PRODUCT_CREATED_EVENT || eventType === PRODUCT_UPDATED_EVENT;
 
+/** Snapshot completo de producto (mismo contrato que persiste el event store). */
 export const isProductSnapshot = (
   unknownValue: unknown,
 ): unknownValue is Product => {
@@ -43,6 +45,7 @@ export const isProductSnapshot = (
     typeof candidateRecord.title === 'string' &&
     typeof candidateRecord.price === 'number' &&
     typeof candidateRecord.active === 'boolean' &&
+    typeof candidateRecord.createdAt === 'string' &&
     typeof candidateRecord.updatedAt === 'string'
   );
 };

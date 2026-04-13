@@ -60,6 +60,8 @@ export function createServiceConfig(
         process.env.AWS_SQS_NOTIFICATION_ORDER_STATUS_QUEUE_URL,
       cartProductEventsQueueUrl:
         process.env.AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL,
+      productsProjectionQueueUrl:
+        process.env.AWS_SQS_PRODUCTS_PROJECTION_QUEUE_URL,
     },
     database: {
       ordersDbPath: process.env.ORDERS_DB_PATH ?? 'data/orders.sqlite',

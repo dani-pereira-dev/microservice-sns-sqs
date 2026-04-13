@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   DynamoDBDocumentClient,
   GetCommand,
+  PutCommand,
   ScanCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { Product } from '@shared/contracts/products';
@@ -37,6 +38,23 @@ export class ProductProjectionRepository {
       return null;
     }
     return this.mapItemToProduct(out.Item as Record<string, unknown>);
+  }
+
+  async upsertProduct(product: Product): Promise<void> {
+    const table = this.requireTable();
+    await this.documentClient.send(
+      new PutCommand({
+        TableName: table,
+        Item: {
+          id: product.id,
+          title: product.title,
+          price: product.price,
+          active: product.active,
+          createdAt: product.createdAt,
+          updatedAt: product.updatedAt,
+        },
+      }),
+    );
   }
 
   async listProducts(): Promise<Product[]> {

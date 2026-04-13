@@ -4,6 +4,7 @@ import { createServiceConfig } from '@shared/config/create-service-config';
 import { MessagingModule } from '@shared/messaging/messaging.module';
 import { ProductsDatabaseModule } from './persistence/product-events/products-database.module';
 import { ProductsModule } from './domain/products.module';
+import { ProductsProjectionSyncModule } from './sync/products-projection-sync.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ProductsModule } from './domain/products.module';
     }),
     ProductsDatabaseModule,
     ProductsModule,
+    ProductsProjectionSyncModule,
   ],
 })
 export class AppModule {}

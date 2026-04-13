@@ -8,7 +8,7 @@ import {
   isProductLifecycleEventEnvelope,
   isProductSnapshot,
   isProductUpsertLifecycleEventType,
-} from '../validators/product-projection-sync.domain.validators';
+} from '@shared/product-events-sync/product-lifecycle-message.validators';
 
 @Injectable()
 export class ProductProjectionSyncService {

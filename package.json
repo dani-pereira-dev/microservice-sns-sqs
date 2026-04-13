@@ -11,6 +11,7 @@
     "seed:cart-product-projections": "node scripts/seed-data.js --entity cart-product-projections --count 5000",
     "seed:order-ready": "node scripts/seed-data.js --entity orders-ready --count 1",
     "queues:purge": "node scripts/purge-queues.js",
+    "projection:backfill:products": "node scripts/backfill-products-projection-dynamo.js",
     "reset:all": "npm run db:reset && npm run queues:purge",
     "build:orders": "tsc -p apps/orders/tsconfig.json && tsc-alias -p apps/orders/tsconfig.json",
     "build:payments": "tsc -p apps/payments/tsconfig.json && tsc-alias -p apps/payments/tsconfig.json",

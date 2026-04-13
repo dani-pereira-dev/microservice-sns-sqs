@@ -266,8 +266,6 @@ apps/cart/src/
     domain/
       services/
         product-projection-sync.service.ts
-      validators/
-        product-projection-sync.domain.validators.ts
     messaging/
       product-events.consumer.ts
 ```
@@ -287,8 +285,7 @@ Que hace cada parte:
 - `productProjection/domain/validators/product-projection.domain.validators.ts`: existencia y `active` de proyeccion
 - `cart/messaging/cart-checkout.publisher.ts`: publica `checkout.initiated`
 - `sync/sync.module.ts`: importa `ProductProjectionModule` y `CartLoggingModule`; registra el consumer de productos
-- `sync/domain/services/product-projection-sync.service.ts`: aplica `product.created` / `product.updated` al repositorio de proyecciones (upsert)
-- `sync/domain/validators/product-projection-sync.domain.validators.ts`: type guards del cuerpo del mensaje (`isNonNullObjectValue`, `isProductLifecycleEventEnvelope`, `isProductUpsertLifecycleEventType`, `isProductSnapshot`)
+- `sync/domain/services/product-projection-sync.service.ts`: aplica `product.created` / `product.updated` al repositorio de proyecciones (upsert); validadores en `libs/shared/src/product-events-sync/product-lifecycle-message.validators.ts`
 - `sync/messaging/product-events.consumer.ts`: suscripcion SQS a `AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL` (deshabilitada si falta la variable)
 
 `app.module.ts` del cart importa `MessagingModule`, `CartModule` y `SyncModule`.
@@ -319,6 +316,13 @@ apps/products/src/
     products-events.publisher.ts
     builders/
       products-events.messaging.builders.ts
+  sync/
+    products-projection-sync.module.ts
+    domain/
+      services/
+        products-projection-sync.service.ts
+    messaging/
+      product-events-projection.consumer.ts
   persistence/
     product-events/
       product-event.entity.ts
@@ -343,10 +347,11 @@ Que hace cada parte:
 - `persistence/product-events/product-event.entity.ts`: fila de event sourcing (`product_events`)
 - `persistence/product-events/product-events.repository.ts`: append, outbox y lecturas de agregado para comandos
 - `persistence/product-events/products-database.module.ts`: `TypeOrmModule.forRootAsync` hacia Postgres en AWS
-- `persistence/product-projection/product-projection.repository.ts`: lecturas de catálogo en Dynamo
+- `persistence/product-projection/product-projection.repository.ts`: lecturas y upsert de catálogo en Dynamo
 - `persistence/product-projection/products-projection-dynamo.module.ts`: cliente Dynamo para esa proyección
+- `sync/products-projection-sync.module.ts`: consumer SQS opcional (`AWS_SQS_PRODUCTS_PROJECTION_QUEUE_URL`) que upsertea la misma proyección Dynamo a partir de `product.created` / `product.updated`
 
-`app.module.ts` registra `ProductsDatabaseModule`, `MessagingModule.register({ serviceName: 'products' })` y `ProductsModule`.
+`app.module.ts` registra `ProductsDatabaseModule`, `MessagingModule.register({ serviceName: 'products' })`, `ProductsModule` y `ProductsProjectionSyncModule`.
 
 ### `notification` legado
 

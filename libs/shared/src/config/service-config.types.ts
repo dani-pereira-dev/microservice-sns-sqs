@@ -18,6 +18,8 @@ export interface ServiceMessagingConfig {
   ordersPaymentConfirmedQueueUrl?: string;
   notificationOrderStatusQueueUrl?: string;
   cartProductEventsQueueUrl?: string;
+  /** Cola SQS (suscrita al topic de product events) para upsert de la proyección Dynamo en `products`. */
+  productsProjectionQueueUrl?: string;
 }
 
 export interface ServiceDatabaseConfig {

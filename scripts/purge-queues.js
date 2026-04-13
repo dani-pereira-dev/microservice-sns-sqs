@@ -58,6 +58,16 @@ async function main() {
       'skip purge: AWS_SQS_CART_PRODUCT_EVENTS_QUEUE_URL is not set',
     );
   }
+
+  const productsProjectionQueueUrl =
+    process.env.AWS_SQS_PRODUCTS_PROJECTION_QUEUE_URL;
+  if (productsProjectionQueueUrl) {
+    await purgeQueue(sqsClient, productsProjectionQueueUrl);
+  } else {
+    console.log(
+      'skip purge: AWS_SQS_PRODUCTS_PROJECTION_QUEUE_URL is not set',
+    );
+  }
 }
 
 main().catch((error) => {

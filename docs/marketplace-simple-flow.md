@@ -12,6 +12,16 @@ La **fuente de verdad** del catalogo es el microservicio `products`, que persist
 
 Sin topic/cola configurados, el consumer no arranca y las proyecciones solo cambian si las cargas por seed o proceso manual; los endpoints de `products` siguen funcionando.
 
+### Proyección Dynamo en `products` (lecturas HTTP)
+
+Los `GET` de catálogo en `products` leen la tabla Dynamo (`PRODUCTS_PROJECTION_TABLE_NAME`). Para mantenerla alineada con el event store:
+
+1. Misma publicación SNS que arriba.
+2. Una **segunda** cola SQS (`AWS_SQS_PRODUCTS_PROJECTION_QUEUE_URL`) suscrita al mismo topic; el módulo `ProductsProjectionSyncModule` consume y hace **upsert** en Dynamo.
+3. Estado inicial o recuperación: `npm run projection:backfill:products` (lee el último snapshot por agregado en Postgres).
+
+Detalle de infra (DLQ, Lambda alternativa): `docs/products-projection-queue-infra.md`.
+
 ### Carrito
 
 El carrito se crea cuando el cliente llama:
