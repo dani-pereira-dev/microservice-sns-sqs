@@ -35,6 +35,10 @@ export interface ServiceDatabaseConfig {
   productsDatabaseSslRejectUnauthorized: boolean;
   /** Intervalo del relay outbox de products (ms). Solo lo usa el microservicio `products`. */
   productsOutboxPollMs: number;
+  /**
+   * Tabla DynamoDB de la proyección de productos en el microservicio `products` (lecturas vía ProductsQueryService).
+   */
+  productsProjectionTableName?: string;
 }
 
 export interface ServiceNotificationConfig {

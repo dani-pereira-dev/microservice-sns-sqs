@@ -320,25 +320,31 @@ apps/products/src/
     builders/
       products-events.messaging.builders.ts
   persistence/
-    entities/
+    product-events/
       product-event.entity.ts
-    product-events.repository.ts
-    products-database.module.ts
+      product-events.repository.ts
+      products-database.module.ts
+    product-projection/
+      product-projection.repository.ts
+      products-projection-dynamo.constants.ts
+      products-projection-dynamo.module.ts
 ```
 
 Que hace cada parte:
 
 - `domain/services/products.service.ts`: fachada liviana
-- `domain/services/products-query.service.ts`: lecturas del catalogo (último snapshot por agregado desde `product_events`)
+- `domain/services/products-query.service.ts`: lecturas HTTP del catalogo desde la proyección en Dynamo (`ProductProjectionRepository`)
 - `domain/services/products-command.service.ts`: altas y actualizaciones; persiste eventos y dispara publicacion de eventos de catalogo
 - `domain/validators/products.domain.validators.ts`: validaciones de titulo, precio y existencia
 - `domain/builders/products.domain.builders.ts`: construccion de `Product` y actualizaciones
 - `http/products.controller.ts`: expone endpoints del catalogo
 - `messaging/products-events.publisher.ts`: publica en SNS `product.created` y `product.updated` si `AWS_SNS_PRODUCT_EVENTS_TOPIC_ARN` esta configurado
 - `messaging/builders/products-events.messaging.builders.ts`: construye los `DomainEvent` de ciclo de vida del producto
-- `persistence/entities/product-event.entity.ts`: fila de event sourcing (`product_events`)
-- `persistence/product-events.repository.ts`: append y lecturas derivadas del stream
-- `persistence/products-database.module.ts`: `TypeOrmModule.forRootAsync` hacia Postgres en AWS
+- `persistence/product-events/product-event.entity.ts`: fila de event sourcing (`product_events`)
+- `persistence/product-events/product-events.repository.ts`: append, outbox y lecturas de agregado para comandos
+- `persistence/product-events/products-database.module.ts`: `TypeOrmModule.forRootAsync` hacia Postgres en AWS
+- `persistence/product-projection/product-projection.repository.ts`: lecturas de catálogo en Dynamo
+- `persistence/product-projection/products-projection-dynamo.module.ts`: cliente Dynamo para esa proyección
 
 `app.module.ts` registra `ProductsDatabaseModule`, `MessagingModule.register({ serviceName: 'products' })` y `ProductsModule`.
 

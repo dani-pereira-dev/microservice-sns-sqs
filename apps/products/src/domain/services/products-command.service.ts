@@ -7,7 +7,7 @@ import {
   CreateProductRequest,
   UpdateProductRequest,
 } from '@shared/contracts/products';
-import { ProductEventsRepository } from '../../persistence/product-events.repository';
+import { ProductEventsRepository } from '../../persistence/product-events/product-events.repository';
 import {
   buildProduct,
   buildUpdatedProduct,

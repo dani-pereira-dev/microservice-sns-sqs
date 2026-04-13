@@ -11,8 +11,8 @@ import {
 } from '@shared/contracts/events';
 import { Product } from '@shared/contracts/products';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { ProductEvent } from '../persistence/entities/product-event.entity';
-import { ProductEventsRepository } from '../persistence/product-events.repository';
+import { ProductEvent } from '../persistence/product-events/product-event.entity';
+import { ProductEventsRepository } from '../persistence/product-events/product-events.repository';
 import { ProductsEventsPublisher } from './products-events.publisher';
 
 const OUTBOX_BATCH_SIZE = 50;

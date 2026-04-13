@@ -37,8 +37,10 @@
   "license": "ISC",
   "description": "Monorepo simple con tres microservicios NestJS",
   "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1029.0",
     "@aws-sdk/client-sns": "^3.1023.0",
     "@aws-sdk/client-sqs": "^3.1023.0",
+    "@aws-sdk/lib-dynamodb": "^3.1029.0",
     "@nestjs/common": "^11.1.17",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.17",

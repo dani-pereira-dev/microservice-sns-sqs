@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Product } from '@shared/contracts/products';
-import { IsNull, Repository } from 'typeorm';
-import { ProductEvent } from './entities/product-event.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Product } from "@shared/contracts/products";
+import { IsNull, Repository } from "typeorm";
+import { ProductEvent } from "./product-event.entity";
 
 @Injectable()
 export class ProductEventsRepository {
@@ -13,9 +13,9 @@ export class ProductEventsRepository {
 
   async getNextVersion(aggregateId: string): Promise<number> {
     const row = await this.events
-      .createQueryBuilder('e')
-      .select('MAX(e.version)', 'max')
-      .where('e.aggregateId = :aggregateId', { aggregateId })
+      .createQueryBuilder("e")
+      .select("MAX(e.version)", "max")
+      .where("e.aggregateId = :aggregateId", { aggregateId })
       .getRawOne<{ max: string | null }>();
 
     const max = row?.max != null ? Number(row.max) : 0;
@@ -48,18 +48,15 @@ export class ProductEventsRepository {
   async findPendingOutbox(limit: number): Promise<ProductEvent[]> {
     return this.events.find({
       where: { publishedAt: IsNull() },
-      order: { createdAt: 'ASC' },
+      order: { createdAt: "ASC" },
       take: limit,
     });
   }
 
-  /**
-   * Último evento por agregado; el payload de lifecycle lleva el Product completo.
-   */
   async findProductById(productId: string): Promise<Product | null> {
     const latest = await this.events.findOne({
       where: { aggregateId: productId },
-      order: { version: 'DESC' },
+      order: { version: "DESC" },
     });
 
     if (!latest) {
@@ -67,20 +64,5 @@ export class ProductEventsRepository {
     }
 
     return latest.payload as Product;
-  }
-
-  async listProducts(): Promise<Product[]> {
-    const latest = await this.events
-      .createQueryBuilder('e')
-      .distinctOn(['e.aggregateId'])
-      .orderBy('e.aggregateId', 'ASC')
-      .addOrderBy('e.version', 'DESC')
-      .getMany();
-
-    const products = latest.map((row) => row.payload as Product);
-    products.sort((a, b) =>
-      a.createdAt.localeCompare(b.createdAt, undefined, { numeric: true }),
-    );
-    return products;
   }
 }

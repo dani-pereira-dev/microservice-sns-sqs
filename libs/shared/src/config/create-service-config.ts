@@ -74,6 +74,7 @@ export function createServiceConfig(
         process.env.PRODUCTS_OUTBOX_POLL_MS,
         5000,
       ),
+      productsProjectionTableName: process.env.PRODUCTS_PROJECTION_TABLE_NAME,
     },
     notification: {
       resendApiKey: process.env.RESEND_API_KEY,

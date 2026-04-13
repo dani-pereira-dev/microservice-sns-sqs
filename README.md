@@ -43,10 +43,14 @@ apps/
       http/
       messaging/
       persistence/
-        entities/
+        product-events/
           product-event.entity.ts
-        product-events.repository.ts
-        products-database.module.ts
+          product-events.repository.ts
+          products-database.module.ts
+        product-projection/
+          product-projection.repository.ts
+          products-projection-dynamo.constants.ts
+          products-projection-dynamo.module.ts
   cart/
     src/
       app.module.ts

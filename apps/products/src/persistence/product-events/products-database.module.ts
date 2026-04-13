@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServiceConfig } from '@shared/config/service-config.types';
-import { ProductEvent } from './entities/product-event.entity';
+import { ProductEvent } from './product-event.entity';
 
 type ProductsPgConnectionLib = {
   resolveProductsPostgresTls: (
@@ -16,19 +16,7 @@ type ProductsPgConnectionLib = {
 function requireProductsPgConnection(): ProductsPgConnectionLib {
   const candidates = [
     join(process.cwd(), 'scripts/lib/products-pg-connection.js'),
-    join(__dirname, '../../../..', 'scripts/lib/products-pg-connection.js'),
-    join(
-      __dirname,
-      '..',
-      '..',
-      '..',
-      '..',
-      '..',
-      '..',
-      'scripts',
-      'lib',
-      'products-pg-connection.js',
-    ),
+    join(__dirname, '../../../../../', 'scripts/lib/products-pg-connection.js'),
   ];
 
   for (const absolutePath of candidates) {
