@@ -1,7 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { Client } = require('pg');
 const { loadLocalEnvironment } = require('./load-env');
+const { buildPgClientConfigFromUrl } = require('./lib/products-pg-connection');
 
 const SERVICE_PATTERNS = [
   'apps/orders/src/main.ts',
@@ -93,9 +95,32 @@ function stopRunningServices() {
   }
 }
 
-function main() {
+async function truncatePaymentsPostgresIfConfigured() {
+  const raw = process.env.PAYMENTS_DATABASE_URL?.trim();
+  if (!raw) {
+    return;
+  }
+
+  const client = new Client(
+    buildPgClientConfigFromUrl(
+      raw,
+      process.env.PAYMENTS_DATABASE_SSL_REJECT_UNAUTHORIZED === 'true',
+    ),
+  );
+  await client.connect();
+  try {
+    await client.query('TRUNCATE payments CASCADE');
+    console.log('truncated Postgres (payments database)');
+  } finally {
+    await client.end();
+  }
+}
+
+async function main() {
   loadLocalEnvironment();
   stopRunningServices();
+
+  await truncatePaymentsPostgresIfConfigured();
 
   const ordersDbPath = resolveDatabasePath(
     process.env.ORDERS_DB_PATH,
@@ -123,4 +148,7 @@ function main() {
   removeIfExists(`${cartDbPath}-wal`);
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

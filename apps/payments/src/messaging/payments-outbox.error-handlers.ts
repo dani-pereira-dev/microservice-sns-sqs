@@ -1,23 +1,18 @@
 import { PaymentsDomainLogger } from '../domain/logging/payments-domain.logger';
-import { PaymentsOutboxRepository } from '../persistence/payments-outbox.repository';
 
-export const handlePaymentsOutboxPublishError = ({
+export const handlePaymentsOutboxPublishError = async ({
   error,
-  eventId,
+  paymentId,
   domainLogger,
-  paymentsOutboxRepository,
 }: {
   error: unknown;
-  eventId: string;
+  paymentId: string;
   domainLogger: PaymentsDomainLogger;
-  paymentsOutboxRepository: PaymentsOutboxRepository;
 }) => {
   const errorMessage = error instanceof Error ? error.message : String(error);
 
-  paymentsOutboxRepository.markFailed(eventId, errorMessage);
-
   domainLogger.error(
-    `Failed to publish outbox event ${eventId}.`,
+    `Failed to publish payment outbox for ${paymentId}.`,
     error instanceof Error ? error.stack : errorMessage,
   );
 };

@@ -41,6 +41,11 @@ export interface ServiceDatabaseConfig {
    * Tabla DynamoDB de la proyección de productos en el microservicio `products` (lecturas vía ProductsQueryService).
    */
   productsProjectionTableName?: string;
+  /** Postgres del microservicio `payments` (TypeORM). Obligatorio para levantar `payments`. */
+  paymentsDatabaseUrl?: string;
+  paymentsDatabaseSslRejectUnauthorized: boolean;
+  /** Solo desarrollo: TypeORM sincroniza esquema en la DB de payments (no usar en producción). */
+  paymentsTypeormSynchronize: boolean;
 }
 
 export interface ServiceNotificationConfig {

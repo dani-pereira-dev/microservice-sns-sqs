@@ -17,12 +17,15 @@ export const buildPaymentConfirmation = (
   confirmedAt: new Date().toISOString(),
 });
 
+/**
+ * Envelope estable para SNS y outbox: `eventId` === `paymentId`, `occurredAt` === `confirmedAt`.
+ */
 export const buildPaymentConfirmedEvent = (
   payment: PaymentConfirmation,
 ): PaymentConfirmedEvent => ({
-  eventId: crypto.randomUUID(),
+  eventId: payment.paymentId,
   eventType: PAYMENT_CONFIRMED_EVENT,
-  occurredAt: new Date().toISOString(),
+  occurredAt: payment.confirmedAt,
   source: 'payments',
   payload: payment,
 });

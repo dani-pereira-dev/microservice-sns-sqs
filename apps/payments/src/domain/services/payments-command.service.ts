@@ -1,32 +1,28 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import {
   ORDER_CREATED_EVENT,
   OrderCreatedEvent,
-} from '@shared/contracts/events';
-import { PaymentConfirmation } from '@shared/contracts/payments';
-import { ServiceConfig } from '@shared/config/service-config.types';
-import { PaymentsOutboxPublisher } from '../../messaging/payments-outbox.publisher';
-import { PaymentsRepository } from '../../persistence/payments.repository';
-import { PaymentsTransactionalRepository } from '../../persistence/payments-transactional.repository';
-import {
-  buildPaymentConfirmation,
-  buildPaymentConfirmedEvent,
-} from '../builders/payments.domain.builders';
+} from "@shared/contracts/events";
+import { ServiceConfig } from "@shared/config/service-config.types";
+import { PaymentsOutboxRelayService } from "../../messaging/payments-outbox-relay.service";
+import { PaymentsCommandRepository } from "../../persistence/payments/payments-command.repository";
+import { PaymentsQueryRepository } from "../../persistence/payments/payments-query.repository";
+import { buildPaymentConfirmation } from "../builders/payments.domain.builders";
 import {
   CreatePaymentAttemptInput,
   ensureIdempotentRequestMatches,
   requirePaymentConfirmedTopicArn,
   validateCreatePaymentAttemptInput,
-} from '../validators/payments.domain.validators';
+} from "../validators/payments.domain.validators";
 
 @Injectable()
 export class PaymentsCommandService {
   constructor(
     private readonly configService: ConfigService<ServiceConfig, true>,
-    private readonly paymentsRepository: PaymentsRepository,
-    private readonly paymentsTransactionalRepository: PaymentsTransactionalRepository,
-    private readonly paymentsOutboxPublisher: PaymentsOutboxPublisher,
+    private readonly paymentsQueryRepository: PaymentsQueryRepository,
+    private readonly paymentsCommandRepository: PaymentsCommandRepository,
+    private readonly paymentsOutboxRelay: PaymentsOutboxRelayService,
   ) {}
 
   async confirmPaymentFromOrderCreated(event: OrderCreatedEvent) {
@@ -38,47 +34,36 @@ export class PaymentsCommandService {
       idempotencyKey: event.payload.orderId,
       orderId: event.payload.orderId,
       amount: event.payload.amount,
-      paymentMethod: 'checkout_auto',
+      paymentMethod: "checkout_auto",
     });
   }
 
   private async confirmPaymentInternal(input: CreatePaymentAttemptInput) {
     validateCreatePaymentAttemptInput(input);
 
-    const existingPayment = this.paymentsRepository.findByIdempotencyKey(
-      input.idempotencyKey,
-    );
+    const existingPayment =
+      await this.paymentsQueryRepository.findPaymentByIdempotencyKey(
+        input.idempotencyKey,
+      );
 
     if (existingPayment) {
       ensureIdempotentRequestMatches(existingPayment, input);
-      void this.paymentsOutboxPublisher.publishPendingEvents();
+      void this.paymentsOutboxRelay.flushPendingOutbox();
 
       return existingPayment;
     }
 
-    const paymentConfirmation: PaymentConfirmation =
-      buildPaymentConfirmation(input);
-    const event = buildPaymentConfirmedEvent(paymentConfirmation);
-    const topicArn = this.getPaymentConfirmedTopicArn();
+    const paymentConfirmation = buildPaymentConfirmation(input);
 
-    this.paymentsTransactionalRepository.createWithOutbox(
-      paymentConfirmation,
-      event,
-      topicArn,
+    requirePaymentConfirmedTopicArn(
+      this.configService.get("messaging.paymentConfirmedTopicArn", {
+        infer: true,
+      }),
     );
-    void this.paymentsOutboxPublisher.publishPendingEvents();
+
+    await this.paymentsCommandRepository.createPayment(paymentConfirmation);
+    void this.paymentsOutboxRelay.flushPendingOutbox();
 
     return paymentConfirmation;
-  }
-
-  private getPaymentConfirmedTopicArn() {
-    return requirePaymentConfirmedTopicArn(
-      this.configService.get(
-      'messaging.paymentConfirmedTopicArn',
-      {
-        infer: true,
-      },
-      ),
-    );
   }
 }

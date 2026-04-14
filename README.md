@@ -29,12 +29,21 @@ apps/
     src/
       app.module.ts
       main.ts
-      payments.controller.ts
-      payments-events.consumer.ts
-      payments.module.ts
-      payments-outbox.publisher.ts
-      payments.repository.ts
-      payments.service.ts
+      domain/
+        payments.module.ts
+        services/
+      http/
+        payments.controller.ts
+      messaging/
+        payments-events.consumer.ts
+        payments-outbox-relay.service.ts
+      persistence/
+        payments/
+          payment.entity.ts
+          payment-confirmed-event.builders.ts
+          payments-database.module.ts
+          payments-query.repository.ts
+          payments-command.repository.ts
   products/
     src/
       app.module.ts
@@ -106,11 +115,13 @@ npm run start:dev:products
 npm run start:dev:cart
 ```
 
-Resetear las bases SQLite locales (`orders`, `payments`, `cart`; `products` usa Postgres en AWS):
+Resetear datos locales: SQLite de `orders` y `cart`, y si definís `PAYMENTS_DATABASE_URL` también vacía las tablas Postgres de **payments** (`TRUNCATE`). `products` sigue en Postgres (AWS o tu URL).
 
 ```bash
 npm run db:reset
 ```
+
+**Solo `payments` + Postgres (Docker + TypeORM):** levantá el contenedor `npm run docker:payments:up`, configurá `PAYMENTS_DATABASE_URL` (ver `.env.example`) y `PAYMENTS_TYPEORM_SYNCHRONIZE=true` la primera vez en local para crear tablas.
 
 Generar datos de prueba del catalogo (requiere `PRODUCTS_DATABASE_URL`; inserta filas en `product_events`):
 
@@ -218,7 +229,8 @@ Podes sobreescribirlos con:
 - `PRODUCTS_PORT`
 - `CART_PORT`
 - `ORDERS_DB_PATH`
-- `PAYMENTS_DB_PATH`
+- `PAYMENTS_DB_PATH` (legacy SQLite; `payments` usa `PAYMENTS_DATABASE_URL` + TypeORM)
+- `PAYMENTS_DATABASE_URL` / `PAYMENTS_TYPEORM_SYNCHRONIZE` / `PAYMENTS_DATABASE_SSL_REJECT_UNAUTHORIZED`
 - `CART_DB_PATH`
 - `PRODUCTS_DATABASE_URL` (Postgres en AWS: event store de `products`)
 - `PRODUCTS_TYPEORM_SYNCHRONIZE` (`true` solo en dev para crear la tabla; en producción usar migraciones o SQL en `scripts/sql/001-product-events.sql`)
@@ -281,7 +293,6 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 - `DELETE /carts/:cartId/items/:itemId`
 - `POST /carts/:cartId/checkout`
 - `GET /payments`
-- `GET /payments/outbox`
 - `GET /payments/:paymentId`
 
 `notification-email` no expone endpoints HTTP. Consume eventos desde SQS a traves de una Lambda.
@@ -307,7 +318,7 @@ El repo usa `serverless` v3 y un wrapper pequeño para cargar `.env`/`.env.local
 Como `POST /carts/:cartId/checkout` ahora responde `accepted`, el resultado final se inspecciona despues consultando `GET /orders` o `GET /payments` una vez que los consumers procesan las colas.
 
 `orders` ahora persiste localmente en SQLite. Por defecto usa `data/orders.sqlite`, asi que las ordenes sobreviven a reinicios del servicio.
-`payments` tambien persiste localmente en SQLite en su propia base separada. Por defecto usa `data/payments.sqlite`.
+`payments` persiste en **Postgres** con **TypeORM** (`PAYMENTS_DATABASE_URL`). Local: `docker-compose.yml` (servicio `postgres-payments`, puerto 5434) y `npm run docker:payments:up`.
 `products` persiste el event store en Postgres en AWS (`PRODUCTS_DATABASE_URL`).
 `cart` persiste localmente en `data/cart.sqlite`.
 Los seeders escriben directo sobre esas bases locales ignoradas por git, asi que no agregan archivos de datos al repo.
@@ -324,5 +335,4 @@ Los seeders escriben directo sobre esas bases locales ignoradas por git, asi que
 - `orders` crea la orden desde eventos y tambien confirma o rechaza la orden cuando recibe `payment.confirmed`.
 - `payments` auto-confirma el pago cuando recibe `order.created`, y publica de forma confiable usando outbox.
 - `orders` usa un repositorio simple con SQLite para persistir `order` y `order_items`.
-- `payments` usa su propio repositorio SQLite separado para persistir pagos confirmados.
-- `payments` tambien usa outbox para garantizar publicacion confiable a SNS.
+- `payments` usa Postgres + TypeORM; la publicacion confiable a SNS usa solo `published_at` en `payments` (null = pendiente), como `product_events`, y el cuerpo del mensaje se arma desde los datos del pago. Si venias de `payment_outbox` o columnas `outbox_*` antiguas, limpia el esquema en Postgres o recrea la BD.

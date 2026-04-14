@@ -8,7 +8,7 @@ import { ProductsDomainLogger } from '../domain/logging/products-domain.logger';
 import {
   buildProductCreatedEvent,
   buildProductUpdatedEvent,
-} from './builders/products-events.messaging.builders';
+} from './products-events.messaging.builders';
 
 @Injectable()
 export class ProductsEventsPublisher {

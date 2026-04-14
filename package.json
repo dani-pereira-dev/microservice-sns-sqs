@@ -5,6 +5,8 @@
   "scripts": {
     "start:dev": "node scripts/start-all-dev.js",
     "db:reset": "node scripts/reset-databases.js",
+    "docker:payments:up": "docker compose up -d postgres-payments",
+    "docker:payments:down": "docker compose stop postgres-payments",
     "db:clear:products": "node scripts/clear-product-events.js",
     "seed": "node scripts/seed-data.js",
     "seed:products": "node scripts/seed-data.js --entity products --count 1000",

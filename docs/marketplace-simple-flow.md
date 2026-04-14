@@ -106,8 +106,7 @@ flowchart TD
   CartItem["CartItem\nid\nproductId\nproductTitleSnapshot\nunitPrice\nquantity\nlineTotal"]
   Order["Order\nid\ncustomerName\namount\nstatus\ncreatedAt\nupdatedAt\nsourceCartId?\npayment?"]
   OrderItem["OrderItem\nid\nproductId\nproductTitleSnapshot\nunitPrice\nquantity\nlineTotal"]
-  Payment["Payment\nidempotencyKey\npaymentId\norderId\namount\npaymentMethod\nstatus\nconfirmedAt"]
-  Outbox["PaymentOutbox\neventId\ntopicArn\nstatus\nattempts\npublishedAt?"]
+  Payment["Payment\nidempotencyKey\npaymentId\norderId\namount\n...\nconfirmedAt\npublishedAt?"]
   CheckoutEvent["checkout.initiated\ncheckoutId\ncartId\nitems[]"]
   OrderCreatedEvent["order.created\norderId\namount\nitems[]"]
 
@@ -121,7 +120,6 @@ flowchart TD
   OrderCreatedEvent -->|"consume"| Payment
   Product -->|"snapshot al checkout"| OrderItem
   Order --> Payment
-  Payment --> Outbox
 ```
 
 ## Comunicacion entre servicios

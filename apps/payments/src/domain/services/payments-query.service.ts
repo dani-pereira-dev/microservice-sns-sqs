@@ -1,26 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { PaymentsOutboxRepository } from '../../persistence/payments-outbox.repository';
-import { PaymentsRepository } from '../../persistence/payments.repository';
-import { requireExistingPayment } from '../validators/payments.domain.validators';
+import { Injectable } from "@nestjs/common";
+import { PaymentsQueryRepository } from "../../persistence/payments/payments-query.repository";
+import { requireExistingPayment } from "../validators/payments.domain.validators";
 
 @Injectable()
 export class PaymentsQueryService {
   constructor(
-    private readonly paymentsRepository: PaymentsRepository,
-    private readonly paymentsOutboxRepository: PaymentsOutboxRepository,
+    private readonly paymentsQueryRepository: PaymentsQueryRepository,
   ) {}
 
   listPayments() {
-    return this.paymentsRepository.list();
+    return this.paymentsQueryRepository.listPayments();
   }
 
-  listOutboxEvents() {
-    return this.paymentsOutboxRepository.listOutboxEvents();
-  }
-
-  getPaymentById(paymentId: string) {
+  async getPaymentById(paymentId: string) {
     return requireExistingPayment(
-      this.paymentsRepository.findByPaymentId(paymentId),
+      await this.paymentsQueryRepository.findPaymentById(paymentId),
       paymentId,
     );
   }

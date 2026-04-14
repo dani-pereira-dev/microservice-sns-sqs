@@ -187,28 +187,33 @@ apps/payments/src/
     payments.controller.ts
   messaging/
     payments-events.consumer.ts
-    payments-outbox.publisher.ts
+    payments-outbox-relay.service.ts
   persistence/
-    payments-database.ts
-    payments.repository.ts
-    payments-outbox.repository.ts
-    payments-transactional.repository.ts
+    payments/
+      payment.entity.ts
+      payment-confirmed-event.builders.ts
+      payments-database.module.ts
+      payments-query.repository.ts
+      payments-command.repository.ts
 ```
 
 Que hace cada parte:
 
 - `domain/services/payments.service.ts`: fachada liviana
-- `domain/services/payments-query.service.ts`: lecturas de pagos y outbox
+- `domain/services/payments-query.service.ts`: lecturas de pagos
 - `domain/services/payments-command.service.ts`: confirmacion automatica, idempotencia y publicacion logica
 - `domain/validators/payments.domain.validators.ts`: validaciones e invariantes de confirmacion
 - `domain/builders/payments.domain.builders.ts`: construccion de `PaymentConfirmation` y `payment.confirmed`
-- `http/payments.controller.ts`: expone lectura de pagos y outbox
+- `http/payments.controller.ts`: expone lectura de pagos
 - `messaging/payments-events.consumer.ts`: escucha `order.created`
-- `messaging/payments-outbox.publisher.ts`: publica eventos pendientes del outbox
-- `persistence/payments-database.ts`: inicializa SQLite y schema
-- `persistence/payments.repository.ts`: lectura de pagos
-- `persistence/payments-outbox.repository.ts`: lectura y actualizacion del outbox
-- `persistence/payments-transactional.repository.ts`: guarda `payment + outbox` en una sola transaccion
+- `messaging/payments-outbox-relay.service.ts`: relay de outbox a SNS (`flushPendingOutbox`, como `products`)
+- `persistence/payments/payment.entity.ts`: fila de pago confirmado; outbox SNS solo con `published_at` (mensaje derivado de la fila + topic en config)
+- `persistence/payments/payments-database.module.ts`: `TypeOrmModule.forRootAsync` (Postgres, TLS como `products`)
+- `persistence/payments/payments-query.repository.ts`: consultas sobre `payments` y `findPendingOutbox` (uso interno del relay)
+- `persistence/payments/payments-command.repository.ts`: escrituras y `markPublished` (`published_at`)
+- `persistence/payments/payment-confirmed-event.builders.ts`: de fila `Payment` a `PaymentConfirmedEvent` para SNS
+
+`app.module.ts` importa `PaymentsDatabaseModule` antes de `PaymentsModule`.
 
 ### `cart`
 

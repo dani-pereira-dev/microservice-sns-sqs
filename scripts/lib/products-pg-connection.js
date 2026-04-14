@@ -76,7 +76,20 @@ function buildProductsPgClientConfig(env) {
     throw new Error('PRODUCTS_DATABASE_URL is not set.');
   }
   const strict = env.PRODUCTS_DATABASE_SSL_REJECT_UNAUTHORIZED === 'true';
-  const { url, ssl } = resolveProductsPostgresTls(raw, strict);
+  return buildPgClientConfigFromUrl(raw, strict);
+}
+
+/**
+ * @param {string} rawUrl
+ * @param {boolean} sslRejectUnauthorized
+ * @returns {{ connectionString: string, ssl?: import('pg').ClientConfig['ssl'] }}
+ */
+function buildPgClientConfigFromUrl(rawUrl, sslRejectUnauthorized) {
+  const raw = rawUrl?.trim();
+  if (!raw) {
+    throw new Error('Postgres URL is empty or not set.');
+  }
+  const { url, ssl } = resolveProductsPostgresTls(raw, sslRejectUnauthorized);
   return ssl !== undefined
     ? { connectionString: url, ssl }
     : { connectionString: url };
@@ -86,5 +99,6 @@ module.exports = {
   stripSslQueryParamsFromPostgresUrl,
   isPlainLocalPostgresUrl,
   resolveProductsPostgresTls,
+  buildPgClientConfigFromUrl,
   buildProductsPgClientConfig,
 };

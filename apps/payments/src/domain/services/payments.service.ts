@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { OrderCreatedEvent } from '@shared/contracts/events';
-import { PaymentsCommandService } from './payments-command.service';
-import { PaymentsQueryService } from './payments-query.service';
+import { Injectable } from "@nestjs/common";
+import { OrderCreatedEvent } from "@shared/contracts/events";
+import { PaymentsCommandService } from "./payments-command.service";
+import { PaymentsQueryService } from "./payments-query.service";
 
 @Injectable()
 export class PaymentsService {
@@ -12,10 +12,6 @@ export class PaymentsService {
 
   listPayments() {
     return this.paymentsQueryService.listPayments();
-  }
-
-  listOutboxEvents() {
-    return this.paymentsQueryService.listOutboxEvents();
   }
 
   getPaymentById(paymentId: string) {

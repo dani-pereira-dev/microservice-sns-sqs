@@ -77,6 +77,11 @@ export function createServiceConfig(
         5000,
       ),
       productsProjectionTableName: process.env.PRODUCTS_PROJECTION_TABLE_NAME,
+      paymentsDatabaseUrl: process.env.PAYMENTS_DATABASE_URL,
+      paymentsDatabaseSslRejectUnauthorized:
+        process.env.PAYMENTS_DATABASE_SSL_REJECT_UNAUTHORIZED === 'true',
+      paymentsTypeormSynchronize:
+        process.env.PAYMENTS_TYPEORM_SYNCHRONIZE === 'true',
     },
     notification: {
       resendApiKey: process.env.RESEND_API_KEY,

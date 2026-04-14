@@ -10,11 +10,6 @@ export class PaymentsController {
     return this.paymentsService.listPayments();
   }
 
-  @Get("outbox")
-  listOutboxEvents() {
-    return this.paymentsService.listOutboxEvents();
-  }
-
   @Get(":paymentId")
   getPaymentById(@Param("paymentId") paymentId: string) {
     return this.paymentsService.getPaymentById(paymentId);

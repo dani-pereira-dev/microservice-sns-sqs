@@ -10,8 +10,8 @@ Este documento muestra solo los estados posibles de las entidades del sistema y 
 | `ProductProjection` | `active` | `true`, `false` |
 | `Cart` | `status` | `open`, `checked_out` |
 | `Order` | `status` | `pending`, `confirmed` |
-| `Payment` | `status` | `confirmed` |
-| `PaymentOutbox` | `status` | `pending`, `published` |
+| `Payment` | `status` (dominio) | `confirmed` |
+| `Payment` | `published_at` (outbox SNS) | `null` (pendiente), con timestamp (publicado) |
 | `CartItem` | sin estado propio | no aplica |
 | `OrderItem` | sin estado propio | no aplica |
 
@@ -23,14 +23,12 @@ flowchart LR
   Projection["ProductProjection\nactive=true|false"]
   Cart["Cart\nopen -> checked_out"]
   Order["Order\npending -> confirmed"]
-  Payment["Payment\nconfirmed"]
-  Outbox["PaymentOutbox\npending -> published"]
+  Payment["Payment\nconfirmed\npublished_at?"]
 
   Product --> Projection
   Projection --> Cart
   Cart --> Order
   Order --> Payment
-  Payment --> Outbox
 ```
 
 ## Product
@@ -106,24 +104,25 @@ stateDiagram-v2
 
 ### Lectura rapida
 
-- Hoy `Payment` solo tiene un estado persistido: `confirmed`.
+- Hoy `Payment` solo tiene un estado de negocio persistido: `confirmed`.
 - La creacion del pago ocurre automaticamente al consumir `order.created`.
 - La idempotencia evita duplicar pagos ante redelivery del mismo evento.
+- El outbox vive en la misma fila: `published_at` null hasta publicar en SNS (como `product_events`).
 
-## PaymentOutbox
+### Outbox en la fila `Payment`
 
 ```mermaid
 stateDiagram-v2
-  [*] --> Pending: createWithOutbox()
-  Pending --> Published: publishPendingEvents()
-  Published --> [*]
+  [*] --> PendientePublicar: createPaymentWithOutbox()
+  PendientePublicar --> Publicado: publishPendingEvents() OK
+  Publicado --> [*]
 ```
 
 ### Lectura rapida
 
-- Cada evento saliente de `payments` entra primero en `pending`.
-- Cuando el publisher lo envia a SNS correctamente, cambia a `published`.
-- Si falla el envio, queda en `pending` y aumenta `attempts`.
+- Mientras `published_at` es null, el publisher reintenta el envio a SNS (mensaje reconstruido desde la fila; el topic sale de configuracion).
+- Tras un envio exitoso, se setea `published_at`.
+- Si falla el envio, queda pendiente hasta el siguiente ciclo (sin contador en BD, alineado al relay de `products`).
 
 ## Entidades sin estado propio
 
